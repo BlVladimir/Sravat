@@ -1,5 +1,5 @@
-import logging
 from abc import ABC, abstractmethod
+from logging import getLogger
 from typing import Any
 
 import cv2
@@ -11,7 +11,7 @@ from analysis.analysis_environment import Environment
 class Function(ABC):
     """Функции, на которые разбивается алгоритм"""
     def __init__(self, environment:Environment):
-        self.logger = logging.getLogger(type(self).__name__)
+        self.logger = getLogger(type(self).__name__)
         self.environment = environment
 
     @abstractmethod
@@ -24,10 +24,9 @@ class FindRect(Function):
         super().__init__(environment)
 
     def __call__(self, *args, **kwargs):
-        ret, frame = self.environment.cap.read()
+        frame = self.environment.current_frame
         try:
             corners, ids, rejected = self.environment.detector.detectMarkers(frame)
-
             if ids is not None and len(ids) == 4:
                 all_corners = np.vstack([c[0] for c in corners])
 
@@ -37,17 +36,6 @@ class FindRect(Function):
 
                 cv2.aruco.drawDetectedMarkers(frame, corners, ids)
 
-            cv2.imshow('ArUco Markers', frame)
-
-            cv2.waitKey(1)
-        except:
-            self.logger.exception("Error finding rect on frame. Most likely ret not found.")
-
-class QuiteFunction(Function):
-    """Костыль для создания выхода"""
-    def __init__(self, environment:Environment):
-        super().__init__(environment)
-
-    def __call__(self, *args, **kwargs):
-        key = cv2.waitKey(1) & 0xFF
-        return key == ord('q')
+            self.environment.current_frame = frame
+        except Exception as e:
+            self.logger.exception(f'Error finding rect on frame: {e}')
