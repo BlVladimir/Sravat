@@ -1,3 +1,4 @@
+from analysis.analysis_environment import State
 from analysis.functions.function import Function
 
 import numpy as np
@@ -33,12 +34,15 @@ class CreateHomographyTransform(Function):
 
     def __call__(self, *args, **kwargs):
         """Создает гомографию для преобразования плоскости"""
-        centers = self.environment.centers
+        try:
+            centers = self.env.centers
 
-        if len(centers) != 4:
-            self.logger.info(len(centers))
-            return
-        # Сортируем точки
-        src_points = np.float32(self.sort_points(centers))
+            if len(centers) != 4:
+                return
+            # Сортируем точки
+            src_points = np.float32(self.sort_points(centers))
 
-        self.environment.src_points = src_points
+            self.env.src_points = src_points
+        except Exception as e:
+            self.logger.error(f'Error creating homography transform: {e}')
+            self.env.state = State.ERROR

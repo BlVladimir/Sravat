@@ -9,7 +9,7 @@ class Function(ABC):
     """Функции, на которые разбивается алгоритм"""
     def __init__(self, environment:Environment):
         self.logger = getLogger(type(self).__name__)
-        self.environment = environment
+        self.env = environment
 
     @abstractmethod
     def __call__(self, *args, **kwargs)->Any: ...
