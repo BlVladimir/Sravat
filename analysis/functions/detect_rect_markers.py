@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 
 
-class DetectMarkers(Function):
+class DetectRectMarkers(Function):
     """Детектирует ArUco маркеры и возвращает их центры и углы"""
 
     def __init__(self, environment: Environment):
@@ -15,7 +15,8 @@ class DetectMarkers(Function):
     def __call__(self, *args, **kwargs):
         try:
             frame = self.env.current_frame
-            corners, ids, rejected = self.env.detector.detectMarkers(frame)
+            corners, ids, rejected = self.env.detector_rect_markers.detectMarkers(frame)
+
 
             if ids is None:
                 return
@@ -35,5 +36,5 @@ class DetectMarkers(Function):
             self.env.current_frame = output_frame
             self.env.centers = centers
         except Exception as e:
-            self.logger.error(f'Error detecting markers: {e}')
+            self.logger.error(f'Error detecting rect markers: {e}')
             self.env.state = State.ERROR

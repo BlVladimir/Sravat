@@ -9,7 +9,8 @@ class State(Enum):
     END = auto()  # выход из обработки
     ERROR = auto()  # ошибка в процессе выполнения
 
-    DETECT_MARKERS = auto()
+    DETECT_RECT_MARKERS = auto()
+    DETECT_LIGHT_MARKER = auto()
     CREATE_HOMOGRAPHY_TRANSFORM = auto()
     DRAW_PLANE = auto()
 
@@ -18,9 +19,13 @@ class Environment:
     """Хранит переменные, которые используют функции обнаружения"""
     state:State = State.START
 
-    detector = None
-    aruco_dict = None
-    aruco_params = None
+    detector_rect_markers = None
+    aruco_rect_dict = None
+    aruco_rect_params = None
+
+    detector_light_markers = None
+    aruco_light_dict = None
+    aruco_light_params = None
 
     centers = []
     src_points = []
