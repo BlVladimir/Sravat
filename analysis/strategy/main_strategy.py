@@ -5,10 +5,12 @@ import cv2
 import base64
 from logging import getLogger
 
+from analysis.functions.canny import CannyMethod
 from analysis.functions.create_homography_transform import CreateHomographyTransform
 from analysis.functions.detect_light_marker import DetectLightMarker
 from analysis.functions.detect_rect_markers import DetectRectMarkers
 from analysis.functions.draw_plane import DrawPlane
+from analysis.functions.select_detect_contour_method import SelectDetectContourMethod
 
 
 class MainAnalysisStrategy:
@@ -32,13 +34,19 @@ class MainAnalysisStrategy:
             State.DETECT_RECT_MARKERS:         State.DETECT_LIGHT_MARKER,
             State.DETECT_LIGHT_MARKER:         State.CREATE_HOMOGRAPHY_TRANSFORM,
             State.CREATE_HOMOGRAPHY_TRANSFORM: State.DRAW_PLANE,
-            State.DRAW_PLANE:                  State.END
+            State.DRAW_PLANE:                  State.SELECT_METHOD,
+
+            State.CANNY:                       State.END,
+            State.ADAPTIVE:                    State.END
         }  # переходы между состояниями
 
         self.detect_rect_markers = DetectRectMarkers(self.env)
         self.detect_light_marker = DetectLightMarker(self.env)
         self.create_homography_transform = CreateHomographyTransform(self.env)
         self.draw_plane = DrawPlane(self.env)
+
+        self.select_method = SelectDetectContourMethod(self.env)
+        self.canny = CannyMethod(self.env)
 
     def __call__(self, base64_input:str)->str:
         self.env.state = State.START
@@ -64,6 +72,11 @@ class MainAnalysisStrategy:
                 case State.DRAW_PLANE:
                     self.env.state = self._transition[self.env.state]
                     self.draw_plane()
+                case State.SELECT_METHOD:
+                    self.select_method()
+                case State.CANNY:
+                    self.env.state = self._transition[self.env.state]
+                    self.canny()
 
         result_base64 = self.to_base64(self.env.current_frame)
 

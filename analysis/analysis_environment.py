@@ -14,6 +14,10 @@ class State(Enum):
     CREATE_HOMOGRAPHY_TRANSFORM = auto()
     DRAW_PLANE = auto()
 
+    SELECT_METHOD = auto()
+    CANNY = auto()
+    ADAPTIVE = auto()
+
 @dataclass
 class Environment:
     """Хранит переменные, которые используют функции обнаружения"""
