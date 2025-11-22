@@ -24,11 +24,10 @@ class MainAnalysisStrategy:
 
         self._transition = {
             State.START:                       State.DETECT_MARKERS,
-            State.ERROR:                       State.END,
             State.DETECT_MARKERS:              State.CREATE_HOMOGRAPHY_TRANSFORM,
             State.CREATE_HOMOGRAPHY_TRANSFORM: State.DRAW_PLANE,
             State.DRAW_PLANE:                  State.END
-        }
+        }  # переходы между состояниями
 
         self.detect_markers = DetectMarkers(self.env)
         self.create_homography_transform = CreateHomographyTransform(self.env)
@@ -43,7 +42,7 @@ class MainAnalysisStrategy:
         while self.env.state != State.END:
             match self.env.state:
                 case State.ERROR:
-                    return base64_input
+                    return base64_input  # при ошибке в процессе обработки возвращает необработанную картинку
                 case State.START:
                     self.env.state = self._transition[self.env.state]
                 case State.DETECT_MARKERS:

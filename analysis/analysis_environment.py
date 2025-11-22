@@ -5,9 +5,9 @@ import numpy as np
 
 
 class State(Enum):
-    START = auto()
-    END = auto()
-    ERROR = auto()
+    START = auto()  # вход в обработку
+    END = auto()  # выход из обработки
+    ERROR = auto()  # ошибка в процессе выполнения
 
     DETECT_MARKERS = auto()
     CREATE_HOMOGRAPHY_TRANSFORM = auto()
