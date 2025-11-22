@@ -52,6 +52,8 @@ class MainAnalysisStrategy:
             for function in self.pipeline:
                 function()
 
+            frame = self.environment.current_frame
+
             result_base64 = self.to_base64(frame)
 
             return result_base64

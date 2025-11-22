@@ -36,6 +36,7 @@ class CreateHomographyTransform(Function):
         centers = self.environment.centers
 
         if len(centers) != 4:
+            self.logger.info(len(centers))
             return
         # Сортируем точки
         src_points = np.float32(self.sort_points(centers))
