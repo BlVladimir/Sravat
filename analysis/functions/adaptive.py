@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 
 
-class CannyMethod(Function):
+class Adaptive(Function):
     def __init__(self, environment):
         super().__init__(environment)
 
@@ -14,21 +14,23 @@ class CannyMethod(Function):
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        # Вычисляем резкость изображения через лапласиан
-        sharpness = cv2.Laplacian(gray, cv2.CV_64F).var()
+        # Применяем адаптивный порог
+        binary = cv2.adaptiveThreshold(
+            gray,
+            255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY_INV,
+            11,  # размер блока для вычисления порога
+            2  # константа вычитания из среднего
+        )
 
-        sigma = 0.33
-        median_val = np.median(gray)
-        lower = int(max(0, (1.0 - sigma) * median_val))
-        upper = int(min(255, (1.0 + sigma) * median_val))
-
-        edges = cv2.Canny(gray, lower, upper)
-
-        kernel = np.ones((2, 2), np.uint8)
-        edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+        # Морфологические операции для очистки от шума
+        kernel = np.ones((3, 3), np.uint8)
+        binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)  # убираем шум
+        binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)  # заполняем дыры
 
         # Находим контуры
-        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         if not contours:
             return

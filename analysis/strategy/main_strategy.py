@@ -5,6 +5,7 @@ import cv2
 import base64
 from logging import getLogger
 
+from analysis.functions.adaptive import Adaptive
 from analysis.functions.canny import CannyMethod
 from analysis.functions.create_homography_transform import CreateHomographyTransform
 from analysis.functions.detect_light_marker import DetectLightMarker
@@ -47,6 +48,7 @@ class MainAnalysisStrategy:
 
         self.select_method = SelectDetectContourMethod(self.env)
         self.canny = CannyMethod(self.env)
+        self.adaptive = Adaptive(self.env)
 
     def __call__(self, base64_input:str)->str:
         self.env.state = State.START
@@ -77,6 +79,9 @@ class MainAnalysisStrategy:
                 case State.CANNY:
                     self.env.state = self._transition[self.env.state]
                     self.canny()
+                case State.ADAPTIVE:
+                    self.env.state = self._transition[self.env.state]
+                    self.adaptive()
 
         result_base64 = self.to_base64(self.env.current_frame)
 

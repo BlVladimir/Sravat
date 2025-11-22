@@ -19,7 +19,7 @@ class SelectDetectContourMethod(Function):
             if laplacian > 100:
                 self.env.state = State.CANNY
             else:
-                self.env.state = State.CANNY
+                self.env.state = State.ADAPTIVE
         except Exception as e:
             self.logger.error(f'Error selecting detect contour method: {e}')
             self.env.state = State.ERROR
