@@ -34,28 +34,26 @@ class MainAnalysisStrategy:
         self.create_homography_transform = CreateHomographyTransform(self.env)
         self.draw_plane = DrawPlane(self.env)
 
-        self.state = State.START
-
     def __call__(self, base64_input:str)->str:
-        self.state = State.START
+        self.env.state = State.START
         frame = self.to_cv2(base64_input)
 
         self.env.current_frame = frame
 
-        while self.state != State.END:
-            match self.state:
+        while self.env.state != State.END:
+            match self.env.state:
                 case State.ERROR:
                     return base64_input
                 case State.START:
-                    self.state = self._transition[self.state]
+                    self.env.state = self._transition[self.env.state]
                 case State.DETECT_MARKERS:
-                    self.state = self._transition[self.state]
+                    self.env.state = self._transition[self.env.state]
                     self.detect_markers()
                 case State.CREATE_HOMOGRAPHY_TRANSFORM:
-                    self.state = self._transition[self.state]
+                    self.env.state = self._transition[self.env.state]
                     self.create_homography_transform()
                 case State.DRAW_PLANE:
-                    self.state = self._transition[self.state]
+                    self.env.state = self._transition[self.env.state]
                     self.draw_plane()
 
         result_base64 = self.to_base64(self.env.current_frame)
