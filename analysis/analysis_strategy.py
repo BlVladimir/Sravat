@@ -5,7 +5,9 @@ import cv2
 import numpy as np
 
 from analysis.analysis_environment import Environment
-from analysis.function import FindRect
+from analysis.functions.create_homography_transform import CreateHomographyTransform
+from analysis.functions.detect_markers import DetectMarkers
+from analysis.functions.draw_plane import DrawPlane
 
 
 class AnalysisStrategyInterface(Protocol):
@@ -27,20 +29,28 @@ class MainAnalysisStrategy:
     """Основная стратегия обработки"""
     def __init__(self):
         self.environment = Environment()
-        aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
-        parameters = cv2.aruco.DetectorParameters()
-        self.environment.detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
+
+        self.environment.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
+        self.environment.aruco_params = cv2.aruco.DetectorParameters()
+        self.environment.detector = cv2.aruco.ArucoDetector(self.environment.aruco_dict, self.environment.aruco_params)
+
 
         self.logger = getLogger(type(self).__name__)
 
-        self.find_rect = FindRect(self.environment)
+        self.pipeline = [
+            DetectMarkers(self.environment),
+            CreateHomographyTransform(self.environment),
+            DrawPlane(self.environment),
+        ]
 
     def __call__(self, base64_input:str)->str:
         try:
             frame = self.to_cv2(base64_input)
 
             self.environment.current_frame = frame
-            self.find_rect()
+
+            for function in self.pipeline:
+                function()
 
             result_base64 = self.to_base64(frame)
 
