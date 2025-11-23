@@ -1,3 +1,5 @@
+from curses.textpad import rectangle
+
 from analysis.analysis_config import Config
 from analysis.functions.function import Function
 
@@ -14,6 +16,10 @@ class Adaptive(Function):
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+        mask = np.zeros(gray.shape, dtype=np.uint8)
+        pts = np.int32(self.env.src_points)
+        cv2.fillPoly(mask, [pts], 255)
+
         # Применяем адаптивный порог
         binary = cv2.adaptiveThreshold(
             gray,
@@ -23,6 +29,8 @@ class Adaptive(Function):
             11,  # размер блока для вычисления порога
             2  # константа вычитания из среднего
         )
+
+        binary = cv2.bitwise_and(binary, binary, mask=mask)
 
         # Морфологические операции для очистки от шума
         kernel = np.ones((3, 3), np.uint8)
@@ -41,7 +49,6 @@ class Adaptive(Function):
         if not valid_contours:
             return
 
-        # Берем самый большой контур
         main_contour = max(valid_contours, key=cv2.contourArea)
 
         # Аппроксимируем контур (упрощаем)

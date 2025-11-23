@@ -6,5 +6,5 @@ class Config:
         'corners': [(0, 0, 255), (0, 255, 0), (255, 0, 0), (255, 255, 0)]  # Угловые точки
     }
 
-    min_area = 500
-    approximation_epsilon = 0.01
+    min_area = 100
+    approximation_epsilon = 0.008

@@ -11,9 +11,6 @@ class CreateHomographyTransform(Function):
         """Сортирует точки в порядке: top-left, top-right, bottom-right, bottom-left"""
         points = np.array(points)
 
-        if len(points) != 4:
-            return None
-
         # Сортируем по y-координате
         y_sorted = points[np.argsort(points[:, 1])]
 
@@ -38,6 +35,9 @@ class CreateHomographyTransform(Function):
             centers = self.env.centers
 
             if len(centers) != 4:
+                self.env.centers = []
+                self.env.src_points = None
+                self.env.state = State.END
                 return
             # Сортируем точки
             src_points = np.float32(self.sort_points(centers))

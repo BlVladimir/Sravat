@@ -14,15 +14,23 @@ class CannyMethod(Function):
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        # Вычисляем резкость изображения через лапласиан
-        sharpness = cv2.Laplacian(gray, cv2.CV_64F).var()
+        mask = np.zeros(gray.shape, dtype=np.uint8)
+        pts = np.int32(self.env.src_points)
+        cv2.fillPoly(mask, [pts], 255)
+
+        # Применяем маску: оставляем только пиксели внутри четырёхугольника
+        gray = cv2.bitwise_and(gray, gray, mask=mask)
+
+        masked_pixels = gray[mask == 255]
+        median_val = np.median(masked_pixels)
 
         sigma = 0.33
-        median_val = np.median(gray)
         lower = int(max(0, (1.0 - sigma) * median_val))
         upper = int(min(255, (1.0 + sigma) * median_val))
 
         edges = cv2.Canny(gray, lower, upper)
+
+        edges = cv2.bitwise_and(edges, edges, mask=mask)
 
         kernel = np.ones((2, 2), np.uint8)
         edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
@@ -39,10 +47,9 @@ class CannyMethod(Function):
         if not valid_contours:
             return
 
-        # Берем самый большой контур
         main_contour = max(valid_contours, key=cv2.contourArea)
 
-        # Аппроксимируем контур (упрощаем)
+        # Аппроксимируем контур
         epsilon = Config.approximation_epsilon * cv2.arcLength(main_contour, True)
         approx_contour = cv2.approxPolyDP(main_contour, epsilon, True)
 
