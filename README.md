@@ -12,62 +12,43 @@
 
 ```mermaid
 classDiagram
-    direction LR
-
-    class Environment {
-        <<dataclass>>
-        +detector
-        +aruco_dict
-        +aruco_params
-        +centers: list
-        +src_points: list
-        +current_frame: np.ndarray?
+    class State {
+    <<dataclass>>
+    +method: Method
+    +centers: list
+    +src_points: list
+    +current_frame: np.ndarray
     }
-
+    
     class Function {
         <<abstract>>
-        +logger
-        +env: Environment
+        #logger
+        #state: State
+        +__call__()*
     }
-
-    class DetectMarkers {
-        +env: Environment
-    }
-
-    class CreateHomographyTransform {
-        +env: Environment
-    }
-
-    class DrawPlane {
-        +env: Environment
-    }
-
+    
+    
     class MainAnalysisStrategy {
-        +env: Environment
-        +detect_markers: DetectMarkers
-        +create_homography_transform: CreateHomographyTransform
-        +draw_plane: DrawPlane
+        -logger
+        -state: State
+        -_transition: dict
+        -to_cv2(base64_string) np.ndarray
+        -to_base64(image) str
     }
-
-    class RunTime {
-        +logger
-        +analise_strategy: MainAnalysisStrategy
-        +cap
+    
+    class FacadeAnalysis {
+        -strategy: AnalysisStrategyInterface
+        +analyze_frame(base64_input) str
     }
-
-    class ANSIColorFormatter {
-        +format(record)
+    
+    class AnalysisStrategyInterface {
+        <<interface>>
+        +__call__(base64_input) str*
     }
-
-    %% Inheritance (project classes only)
-    Function <|-- DetectMarkers
-    Function <|-- CreateHomographyTransform
-    Function <|-- DrawPlane
-
-    %% Composition / Aggregation
-    MainAnalysisStrategy *-- Environment
-    MainAnalysisStrategy o-- DetectMarkers
-    MainAnalysisStrategy o-- CreateHomographyTransform
-    MainAnalysisStrategy o-- DrawPlane
-
-    RunTime o-- MainAnalysisStrategy
+    
+    AnalysisStrategyInterface <|.. MainAnalysisStrategy
+    
+    %% Композиция / Агрегация
+    MainAnalysisStrategy *-- State
+    
+    FacadeAnalysis o-- AnalysisStrategyInterface
