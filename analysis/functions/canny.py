@@ -6,17 +6,17 @@ import numpy as np
 
 
 class CannyMethod(Function):
-    def __init__(self, environment):
-        super().__init__(environment)
+    def __init__(self, state):
+        super().__init__(state)
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):
-        frame = self.env.current_frame
+        frame = self.state.current_frame
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         mask = np.zeros(gray.shape, dtype=np.uint8)
-        pts = np.int32(self.env.src_points)
+        pts = np.int32(self.state.src_points)
         cv2.fillPoly(mask, [pts], 255)
 
         # Применяем маску: оставляем только пиксели внутри четырёхугольника
@@ -42,8 +42,11 @@ class CannyMethod(Function):
         if not contours:
             return
 
+        min_area = 100
+        approximation_epsilon = 0.008
+
         # Фильтруем контуры по площади
-        valid_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > Config.min_area]
+        valid_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_area]
 
         if not valid_contours:
             return
@@ -51,9 +54,9 @@ class CannyMethod(Function):
         main_contour = max(valid_contours, key=cv2.contourArea)
 
         # Аппроксимируем контур
-        epsilon = Config.approximation_epsilon * cv2.arcLength(main_contour, True)
+        epsilon = approximation_epsilon * cv2.arcLength(main_contour, True)
         approx_contour = cv2.approxPolyDP(main_contour, epsilon, True)
 
         if approx_contour is not None:
             cv2.drawContours(frame, [approx_contour], -1, Config.colors['contour'], 3)
-            self.env.current_frame =  frame
+            self.state.current_frame =  frame

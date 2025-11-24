@@ -1,5 +1,5 @@
 from analysis.analysis_config import Config
-from analysis.analysis_environment import Environment, State
+from analysis.analysis_state import State
 from analysis.functions.function import Function, handle_exceptions
 
 import cv2
@@ -7,16 +7,16 @@ import numpy as np
 
 
 class DrawPlane(Function):
-    def __init__(self, environment: Environment):
-        super().__init__(environment)
+    def __init__(self, state: State):
+        super().__init__(state)
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):
         """Рисует плоскость и маркеры на кадре"""
-        output_frame = self.env.current_frame
-        src_points = self.env.src_points
+        output_frame = self.state.current_frame
+        src_points = self.state.src_points
 
-        if len(self.env.centers) == 4 and src_points is not None:
+        if len(self.state.centers) == 4 and src_points is not None:
             pts = src_points.astype(int)
 
             # Создаём маску четырёхугольника
@@ -40,4 +40,4 @@ class DrawPlane(Function):
             for i, (point, color) in enumerate(zip(pts, Config.colors['corners'])):
                 cv2.circle(output_frame, tuple(point), 3, color, -1)
 
-        self.env.current_frame = output_frame
+        self.state.current_frame = output_frame

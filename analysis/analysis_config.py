@@ -5,6 +5,3 @@ class Config:
         'center': (0, 255, 0),  # Зеленый центр
         'corners': [(0, 0, 255), (0, 255, 0), (255, 0, 0), (255, 255, 0)]  # Угловые точки
     }
-
-    min_area = 100
-    approximation_epsilon = 0.008

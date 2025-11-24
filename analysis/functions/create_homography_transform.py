@@ -1,4 +1,4 @@
-from analysis.analysis_environment import State
+from analysis.analysis_state import Method
 from analysis.functions.function import Function, handle_exceptions
 
 import numpy as np
@@ -32,14 +32,14 @@ class CreateHomographyTransform(Function):
     @handle_exceptions
     def __call__(self, *args, **kwargs):
         """Создает гомографию для преобразования плоскости"""
-        centers = self.env.centers
+        centers = self.state.centers
 
         if len(centers) != 4:
-            self.env.centers = []
-            self.env.src_points = None
-            self.env.state = State.END
+            self.state.centers = []
+            self.state.src_points = None
+            self.state.method = Method.END
             return
         # Сортируем точки
         src_points = np.float32(self.sort_points(centers))
 
-        self.env.src_points = src_points
+        self.state.src_points = src_points

@@ -4,7 +4,7 @@ from typing import Optional
 import numpy as np
 
 
-class State(Enum):
+class Method(Enum):
     START = auto()  # вход в обработку
     END = auto()  # выход из обработки
     ERROR = auto()  # ошибка в процессе выполнения
@@ -19,13 +19,9 @@ class State(Enum):
     ADAPTIVE = auto()
 
 @dataclass
-class Environment:
+class State:
     """Хранит переменные, которые используют функции обнаружения"""
-    state:State = State.START
-
-    detector_rect_markers = None
-    aruco_rect_dict = None
-    aruco_rect_params = None
+    method:Method = Method.START
 
     detector_light_markers = None
     aruco_light_dict = None

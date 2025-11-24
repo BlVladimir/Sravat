@@ -1,4 +1,4 @@
-from analysis.analysis_environment import Environment, State
+from analysis.analysis_state import State, Method
 
 import numpy as np
 import cv2
@@ -17,73 +17,64 @@ from analysis.functions.select_detect_contour_method import SelectDetectContourM
 class MainAnalysisStrategy:
     """Основная стратегия обработки"""
     def __init__(self):
-        self.env = Environment()
-
-        self.env.aruco_rect_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
-        self.env.aruco_rect_params = cv2.aruco.DetectorParameters()
-        self.env.detector_rect_markers = cv2.aruco.ArucoDetector(self.env.aruco_rect_dict, self.env.aruco_rect_params)
-
-        self.env.aruco_light_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_100)
-        self.env.aruco_light_params = cv2.aruco.DetectorParameters()
-        self.env.detector_light_markers = cv2.aruco.ArucoDetector(self.env.aruco_light_dict, self.env.aruco_light_params)
-
+        self.state = State()
 
         self.logger = getLogger(type(self).__name__)
 
         self._transition = {
-            State.START:                       State.DETECT_RECT_MARKERS,
-            State.DETECT_RECT_MARKERS:         State.DETECT_LIGHT_MARKER,
-            State.DETECT_LIGHT_MARKER:         State.CREATE_HOMOGRAPHY_TRANSFORM,
-            State.CREATE_HOMOGRAPHY_TRANSFORM: State.DRAW_PLANE,
-            State.DRAW_PLANE:                  State.SELECT_METHOD,
+            Method.START:                       Method.DETECT_RECT_MARKERS,
+            Method.DETECT_RECT_MARKERS:         Method.DETECT_LIGHT_MARKER,
+            Method.DETECT_LIGHT_MARKER:         Method.CREATE_HOMOGRAPHY_TRANSFORM,
+            Method.CREATE_HOMOGRAPHY_TRANSFORM: Method.DRAW_PLANE,
+            Method.DRAW_PLANE:                  Method.SELECT_METHOD,
 
-            State.CANNY:                       State.END,
-            State.ADAPTIVE:                    State.END
+            Method.CANNY:                       Method.END,
+            Method.ADAPTIVE:                    Method.END
         }  # переходы между состояниями
 
-        self.detect_rect_markers = DetectRectMarkers(self.env)
-        self.detect_light_marker = DetectLightMarker(self.env)
-        self.create_homography_transform = CreateHomographyTransform(self.env)
-        self.draw_plane = DrawPlane(self.env)
+        self.detect_rect_markers = DetectRectMarkers(self.state)
+        self.detect_light_marker = DetectLightMarker(self.state)
+        self.create_homography_transform = CreateHomographyTransform(self.state)
+        self.draw_plane = DrawPlane(self.state)
 
-        self.select_method = SelectDetectContourMethod(self.env)
-        self.canny = CannyMethod(self.env)
-        self.adaptive = Adaptive(self.env)
+        self.select_method = SelectDetectContourMethod(self.state)
+        self.canny = CannyMethod(self.state)
+        self.adaptive = Adaptive(self.state)
 
     def __call__(self, base64_input:str)->str:
-        self.env.state = State.START
+        self.state.method = Method.START
         frame = self.to_cv2(base64_input)
 
-        self.env.current_frame = frame
+        self.state.current_frame = frame
 
-        while self.env.state != State.END:
-            match self.env.state:
-                case State.ERROR:
+        while self.state.method != Method.END:
+            match self.state.method:
+                case Method.ERROR:
                     return base64_input  # при ошибке в процессе обработки возвращает необработанную картинку
-                case State.START:
-                    self.env.state = self._transition[self.env.state]
-                case State.DETECT_RECT_MARKERS:
-                    self.env.state = self._transition[self.env.state]
+                case Method.START:
+                    self.state.method = self._transition[self.state.method]
+                case Method.DETECT_RECT_MARKERS:
+                    self.state.method = self._transition[self.state.method]
                     self.detect_rect_markers()
-                case State.DETECT_LIGHT_MARKER:
-                    self.env.state = self._transition[self.env.state]
+                case Method.DETECT_LIGHT_MARKER:
+                    self.state.method = self._transition[self.state.method]
                     self.detect_light_marker()
-                case State.CREATE_HOMOGRAPHY_TRANSFORM:
-                    self.env.state = self._transition[self.env.state]
+                case Method.CREATE_HOMOGRAPHY_TRANSFORM:
+                    self.state.method = self._transition[self.state.method]
                     self.create_homography_transform()
-                case State.DRAW_PLANE:
-                    self.env.state = self._transition[self.env.state]
+                case Method.DRAW_PLANE:
+                    self.state.method = self._transition[self.state.method]
                     self.draw_plane()
-                case State.SELECT_METHOD:
+                case Method.SELECT_METHOD:
                     self.select_method()
-                case State.CANNY:
-                    self.env.state = self._transition[self.env.state]
+                case Method.CANNY:
+                    self.state.method = self._transition[self.state.method]
                     self.canny()
-                case State.ADAPTIVE:
-                    self.env.state = self._transition[self.env.state]
+                case Method.ADAPTIVE:
+                    self.state.method = self._transition[self.state.method]
                     self.adaptive()
 
-        result_base64 = self.to_base64(self.env.current_frame)
+        result_base64 = self.to_base64(self.state.current_frame)
 
         return result_base64
 
