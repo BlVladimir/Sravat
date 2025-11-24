@@ -1,5 +1,5 @@
 from analysis.analysis_config import Config
-from analysis.functions.function import Function
+from analysis.functions.function import Function, handle_exceptions
 
 import cv2
 import numpy as np
@@ -9,6 +9,7 @@ class CannyMethod(Function):
     def __init__(self, environment):
         super().__init__(environment)
 
+    @handle_exceptions
     def __call__(self, *args, **kwargs):
         frame = self.env.current_frame
 
