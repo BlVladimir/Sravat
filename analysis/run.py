@@ -1,7 +1,7 @@
 import base64
 from logging import getLogger
 
-from analysis.analysis_strategy import MainAnalysisStrategy
+from analysis.strategy.main_strategy import MainAnalysisStrategy
 from logger_config import setup_logging
 import cv2
 import numpy as np
