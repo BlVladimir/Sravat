@@ -26,35 +26,13 @@ class RunTime:
             if not ret:
                 self.logger.error('Failed to capture frame')
 
-            base64_data = self.frame_to_base64(frame)
+            result_frame = self.analise_strategy(frame)
 
-            if base64_data:
-                result_base64 = self.analise_strategy(base64_data)
-
-                if result_base64:
-                    processed_data = base64.b64decode(result_base64)
-                    processed_array = np.frombuffer(processed_data, np.uint8)
-                    processed_frame = cv2.imdecode(processed_array, cv2.IMREAD_COLOR)
-                    cv2.imshow('Processed', processed_frame)
-                else:
-                    cv2.imshow('Original', frame)
+            cv2.imshow('Original', result_frame)
 
             key = cv2.waitKey(1) & 0xFF
             if key == ord('q'):
                 break
-
-    def frame_to_base64(self, frame):
-        """Конвертирует OpenCV frame в Base64 строку"""
-        try:
-            success, encoded_image = cv2.imencode('.jpg', frame)
-            if success:
-                base64_string = base64.b64encode(encoded_image).decode('utf-8')
-                return base64_string
-            else:
-                return ''
-        except Exception as e:
-            self.logger.error(f'Error converting frame to Base64: {e}')
-            return ''
 
 
 
