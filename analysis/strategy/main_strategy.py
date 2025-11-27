@@ -41,16 +41,15 @@ class MainAnalysisStrategy:
         self.canny = CannyMethod(self.state)
         self.adaptive = Adaptive(self.state)
 
-    def __call__(self, base64_input:str)->str:
+    def __call__(self, frame:np.ndarray)->np.ndarray:
         self.state.method = Method.START
-        frame = self.to_cv2(base64_input)
 
         self.state.current_frame = frame
 
         while self.state.method != Method.END:
             match self.state.method:
                 case Method.ERROR:
-                    return base64_input  # при ошибке в процессе обработки возвращает необработанную картинку
+                    return frame  # при ошибке в процессе обработки возвращает необработанную картинку
                 case Method.START:
                     self.state.method = self._transition[self.state.method]
                 case Method.DETECT_RECT_MARKERS:
@@ -74,38 +73,4 @@ class MainAnalysisStrategy:
                     self.state.method = self._transition[self.state.method]
                     self.adaptive()
 
-        result_base64 = self.to_base64(self.state.current_frame)
-
-        return result_base64
-
-    def to_cv2(self, base64_string: str):
-        """Конвертирует Base64 строку в изображение OpenCV"""
-        try:
-            img_data = base64.b64decode(base64_string)
-
-            np_array = np.frombuffer(img_data, np.uint8)
-
-            image = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
-
-            if image is None:
-                raise ValueError('Failed to decode image from Base64')
-
-            return image
-        except Exception as e:
-            self.logger.error(f'Error converting Base64 to OpenCV: {e}')
-            return np.zeros((480, 640, 3), dtype=np.uint8)
-
-    def to_base64(self, image: np.ndarray):
-        """Конвертирует изображение OpenCV в Base64 строку"""
-        try:
-            success, encoded_image = cv2.imencode('.jpg', image)
-
-            if not success:
-                raise ValueError('Failed to encode image to JPEG')
-
-            base64_string = base64.b64encode(encoded_image).decode('utf-8')
-
-            return base64_string
-        except Exception as e:
-            self.logger.error(f'Error converting OpenCV to Base64: {e}')
-            return ''
+        return self.state.current_frame

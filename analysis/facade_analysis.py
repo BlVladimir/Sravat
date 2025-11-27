@@ -1,3 +1,5 @@
+import numpy as np
+
 from analysis.strategy.analysis_strategy import AnalysisStrategyInterface
 
 
@@ -8,5 +10,5 @@ class FacadeAnalysis:
     def __init__(self, strategy:AnalysisStrategyInterface):
         self.strategy = strategy
 
-    def analyze_frame(self, base64_input:str)->str:
-        return self.strategy(base64_input)
+    def analyze_frame(self, frame:np.ndarray)->np.ndarray:
+        return self.strategy(frame)
