@@ -132,6 +132,7 @@ class ArUcoPlaneDetector:
         
         warped_image = None
         homography_matrix = None
+        src_points = None
         
         # Если найдено 4 маркера
         if len(centers) == 4:
@@ -141,15 +142,66 @@ class ArUcoPlaneDetector:
             # Рисуем плоскость
             output_frame = self.draw_plane(output_frame, centers, src_points)
         
-        return output_frame, warped_image, homography_matrix, centers
+        return output_frame, warped_image, homography_matrix, centers, src_points
+
+
+class ContourDetector:
+    def __init__(self):
+        self.area_threshold = 500
+    
+    def is_contour_inside_plane(self, contour, plane_points):
+        """Проверяет, полностью ли контур находится внутри плоскости"""
+        if plane_points is None or len(plane_points) != 4:
+            return False
+        
+        # Преобразуем plane_points в правильный формат для OpenCV
+        plane_contour = np.array(plane_points, dtype=np.float32).reshape(-1, 1, 2)
+        
+        # Преобразуем контур в массив точек
+        contour_points = contour.reshape(-1, 2)
+        
+        # Проверяем каждую точку контура
+        for point in contour_points:
+            # Проверяем, находится ли точка внутри четырехугольника
+            result = cv2.pointPolygonTest(plane_contour, tuple(point.astype(float)), False)
+            if result < 0:
+                return False
+        return True
+    
+    def process_frame(self, frame, plane_points=None):
+        """Обрабатывает кадр и рисует контуры только внутри плоскости"""
+        img_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        img_blur = cv2.GaussianBlur(img_gray, (5, 5), 0)
+        _, thresh = cv2.threshold(img_blur, 155, 200, cv2.THRESH_BINARY)
+        
+        kernel = np.ones((3, 3), np.uint8)
+        thresh_clean = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
+        thresh_clean = cv2.morphologyEx(thresh_clean, cv2.MORPH_CLOSE, kernel)
+        
+        contours, _ = cv2.findContours(thresh_clean, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        
+        result = frame.copy()
+        
+        # Фильтруем контуры по площади и расположению внутри плоскости
+        for contour in contours:
+            area = cv2.contourArea(contour)
+            if area > self.area_threshold:
+                # Если задана плоскость, проверяем находится ли контур внутри
+                if plane_points is not None:
+                    if self.is_contour_inside_plane(contour, plane_points):
+                        cv2.drawContours(result, [contour], -1, (0, 255, 0), 2, cv2.LINE_AA)
+                else:
+                    # Если плоскость не задана, рисуем все контуры
+                    cv2.drawContours(result, [contour], -1, (0, 255, 0), 2, cv2.LINE_AA)
+        
+        return result
 
 
 def main():
-    """Основная функция для демонстрации работы класса"""
-    # Создаем детектор
+    """Основная функция для демонстрации работы классов"""
     detector = ArUcoPlaneDetector()
+    contour_detector = ContourDetector()
     
-    # Инициализируем видеопоток
     cap = cv2.VideoCapture(0)
     
     if not cap.isOpened():
@@ -161,22 +213,23 @@ def main():
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("Ошибка: Не удалось получить кадр")
             break
         
-        # Обрабатываем кадр
-        output_frame, warped_image, homography, centers = detector.process_frame(frame)
+        # Обрабатываем кадр для детекции маркеров и плоскости
+        output_frame, warped_image, homography, centers, plane_points = detector.process_frame(frame)
         
-        # Отображаем основной кадр
-        cv2.imshow('ArUco Markers Detection', output_frame)
+        # Обрабатываем кадр для детекции контуров (передаем точки плоскости)
+        result = contour_detector.process_frame(output_frame, plane_points)
         
+        cv2.imshow('Contours in Plane', result)
         
         # Обработка клавиш
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
             break
     
-    # Освобождаем ресурсы
     cap.release()
     cv2.destroyAllWindows()
 
+if __name__ == "__main__":
+    main()
