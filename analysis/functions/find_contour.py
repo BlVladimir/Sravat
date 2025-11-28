@@ -5,13 +5,13 @@ import cv2
 
 
 class FindContour(Function):
+    """Обрабатывает кадр и рисует контуры только внутри плоскости"""
     def __init__(self, state):
         super().__init__(state)
         self.area_threshold = 500
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):
-        """Обрабатывает кадр и рисует контуры только внутри плоскости"""
         frame = self.state.current_frame
         img_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         img_blur = cv2.GaussianBlur(img_gray, (5, 5), 0)
