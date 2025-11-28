@@ -21,13 +21,10 @@ class DetectRectMarkers(Function):
         frame = self.state.current_frame
         corners, ids, rejected = self.detector_rect_markers.detectMarkers(frame)
 
-
         if ids is None:
             return
 
-        # Рисуем обнаруженные маркеры
-        output_frame = frame.copy()
-        cv2.aruco.drawDetectedMarkers(output_frame, corners, ids)
+        cv2.aruco.drawDetectedMarkers(frame, corners, ids)
 
         # Собираем центры маркеров
         centers = []
@@ -35,7 +32,7 @@ class DetectRectMarkers(Function):
             center = np.mean(corner[0], axis=0)
             centers.append(center)
             # Рисуем центр маркера
-            cv2.circle(output_frame, tuple(center.astype(int)), 3, Config.colors['center'], -1)
+            cv2.circle(frame, tuple(center.astype(int)), 3, Config.colors['center'], -1)
 
-        self.state.current_frame = output_frame
+        self.state.current_frame = frame
         self.state.centers = centers

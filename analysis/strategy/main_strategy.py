@@ -11,6 +11,7 @@ from analysis.functions.create_homography_transform import CreateHomographyTrans
 from analysis.functions.detect_light_marker import DetectLightMarker
 from analysis.functions.detect_rect_markers import DetectRectMarkers
 from analysis.functions.draw_plane import DrawPlane
+from analysis.functions.find_contour import FindContour
 from analysis.functions.select_detect_contour_method import SelectDetectContourMethod
 
 
@@ -26,7 +27,8 @@ class MainAnalysisStrategy:
             Method.DETECT_RECT_MARKERS:         Method.DETECT_LIGHT_MARKER,
             Method.DETECT_LIGHT_MARKER:         Method.CREATE_HOMOGRAPHY_TRANSFORM,
             Method.CREATE_HOMOGRAPHY_TRANSFORM: Method.DRAW_PLANE,
-            Method.DRAW_PLANE:                  Method.SELECT_METHOD,
+            Method.DRAW_PLANE:                  Method.FIND_CONTOUR,
+            Method.FIND_CONTOUR:                Method.END,
 
             Method.CANNY:                       Method.END,
             Method.ADAPTIVE:                    Method.END
@@ -36,6 +38,7 @@ class MainAnalysisStrategy:
         self.detect_light_marker = DetectLightMarker(self.state)
         self.create_homography_transform = CreateHomographyTransform(self.state)
         self.draw_plane = DrawPlane(self.state)
+        self.find_contour = FindContour(self.state)
 
         self.select_method = SelectDetectContourMethod(self.state)
         self.canny = CannyMethod(self.state)
@@ -64,6 +67,9 @@ class MainAnalysisStrategy:
                 case Method.DRAW_PLANE:
                     self.state.method = self._transition[self.state.method]
                     self.draw_plane()
+                case Method.FIND_CONTOUR:
+                    self.state.method = self._transition[self.state.method]
+                    self.find_contour()
                 case Method.SELECT_METHOD:
                     self.select_method()
                 case Method.CANNY:

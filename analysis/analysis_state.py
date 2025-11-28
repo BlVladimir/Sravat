@@ -13,6 +13,7 @@ class Method(Enum):
     DETECT_LIGHT_MARKER = auto()
     CREATE_HOMOGRAPHY_TRANSFORM = auto()
     DRAW_PLANE = auto()
+    FIND_CONTOUR = auto()
 
     SELECT_METHOD = auto()
     CANNY = auto()
@@ -31,4 +32,5 @@ class State:
     src_points = []
 
     current_frame:Optional[np.ndarray] = None
+    current_contour = None
 
