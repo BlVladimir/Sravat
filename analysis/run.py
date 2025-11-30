@@ -1,10 +1,11 @@
-import base64
 from logging import getLogger
 
 from analysis.strategy.main_strategy import MainAnalysisStrategy
 from logger_config import setup_logging
 import cv2
 import numpy as np
+
+from scene3d.run3d import Run3D
 
 
 class RunTime:
@@ -21,7 +22,13 @@ class RunTime:
 
 
     def __call__(self):
+        has_viz = hasattr(cv2, 'viz')
+        if has_viz:
+            run3d = Run3D(self.analise_strategy.state)
+            run3d.setup()
         while True:
+            if has_viz:
+                run3d.show()
             ret, frame = self.cap.read()
             if not ret:
                 self.logger.error('Failed to capture frame')
