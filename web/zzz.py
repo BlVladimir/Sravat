@@ -13,22 +13,24 @@ class VideoCamera(object):
 
     def get_frame(self):
         ret, frame = self.video.read()
+        if not ret:
+            return None
         ret, jpeg = cv2.imencode('.jpg', frame)
+        if not ret:
+            return None
         return jpeg.tobytes()
 
 
 app = Flask(__name__)
 video_stream = VideoCamera()
-frames = []
 recording = True
 N = 20
 
 
 def record_frames(camera):
-    global frames, recording
+    global recording
     while recording:
         frame_bytes = camera.get_frame()
-        frames.append(frame_bytes)
         sleep_time = 1 / N
         time.sleep(sleep_time)
 
@@ -40,6 +42,7 @@ recording_thread.start()
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 def gen(camera):
     while True:
@@ -59,4 +62,3 @@ if __name__ == '__main__':
         app.run(port=8080, host='127.0.0.1', debug=True)
     finally:
         recording = False
-        recording_thread.join()
