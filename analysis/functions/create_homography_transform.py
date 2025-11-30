@@ -37,7 +37,7 @@ class CreateHomographyTransform(Function):
         if len(centers) != 4:
             self.state.centers = []
             self.state.src_points = None
-            self.state.method = Method.END
+            self.state.method = Method.FIND_CONTOUR
             return
         # Сортируем точки
         src_points = np.float32(self.sort_points(centers))
