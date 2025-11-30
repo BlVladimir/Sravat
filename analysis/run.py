@@ -1,5 +1,6 @@
 from logging import getLogger
 
+from analysis.facade_analysis import FacadeAnalysis
 from analysis.strategy.main_strategy import MainAnalysisStrategy
 from logger_config import setup_logging
 import cv2
@@ -17,14 +18,14 @@ class RunTime:
         setup_logging()
         self.logger = getLogger(type(self).__name__)
 
-        self.analise_strategy = MainAnalysisStrategy()
+        self.facade = FacadeAnalysis(MainAnalysisStrategy())
         self.cap = cv2.VideoCapture(0)
 
 
     def __call__(self):
         has_viz = hasattr(cv2, 'viz')
         if has_viz:
-            run3d = Run3D(self.analise_strategy.state)
+            run3d = Run3D(self.facade.strategy.state)
             run3d.setup()
         while True:
             if has_viz:
@@ -33,7 +34,7 @@ class RunTime:
             if not ret:
                 self.logger.error('Failed to capture frame')
 
-            result_frame = self.analise_strategy(frame)
+            result_frame = self.facade.analyze_frame(frame)
 
             cv2.imshow('Original', result_frame)
 
