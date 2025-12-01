@@ -12,7 +12,7 @@ class Config:
         'corners': [(0, 0, 255), (0, 255, 0), (255, 0, 0), (255, 255, 0)]  # Угловые точки
     }
 
-    marker_size = 0.05
+    marker_size = 0.2
 
     camera_matrix = None
     dist_coeffs = None

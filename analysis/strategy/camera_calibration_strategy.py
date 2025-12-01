@@ -11,7 +11,7 @@ class CameraCalibrationStrategy:
     """Стратегия, получающая данные о камере"""
     def __init__(self):
         self.logger = getLogger(type(self).__name__)
-        self.NUM_IMAGES = 30
+        self.NUM_IMAGES = 5
 
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_250)
         self.aruco_params = cv2.aruco.DetectorParameters()
@@ -40,23 +40,18 @@ class CameraCalibrationStrategy:
     def __call__(self, frame:np.ndarray)->np.ndarray:
         self.image_size = (frame.shape[1], frame.shape[0])
 
-        if self.captured_count >= self.NUM_IMAGES:
-            self.logger.warning("Достигнуто максимальное количество кадров")
-
         corners, ids, rejected = self.detector.detectMarkers(frame)
 
         if ids is None or len(ids) == 0:
             return frame
 
         # Берем первый обнаруженный маркер
-        marker_corners = corners[0][0]
-
-        # Переупорядочиваем углы
-        reordered_corners = np.array(list(reversed(marker_corners)), dtype=np.float32)
-
-        # Сохраняем данные
-        self.all_obj_points.append(self.marker_3d_points)
-        self.all_img_points.append(reordered_corners)
+        for marker_corner in corners:
+            # Переупорядочиваем углы
+            reordered_corners = np.array(list(reversed(marker_corner[0])), dtype=np.float32)
+            # Сохраняем данные
+            self.all_obj_points.append(self.marker_3d_points)
+            self.all_img_points.append(reordered_corners)
         self.captured_count += 1
 
         if self.captured_count >= self.NUM_IMAGES:
