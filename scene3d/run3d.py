@@ -1,4 +1,5 @@
 from itertools import islice
+from logging import getLogger
 
 import cv2
 import numpy as np
@@ -13,6 +14,9 @@ class Run3D:
         self.win = cv2.viz.Viz3d("3D Coordinate System")
 
         self.markers = set()
+        self.contour_widgets = set()
+
+        self._logger = getLogger(type(self).__name__)
 
     def setup(self):
         # Создаем виджет координатных осей
@@ -36,4 +40,41 @@ class Run3D:
 
                 self.win.setWidgetPose(f"marker_{idx}", pose)
 
+        self.draw_contour()
+
         self.win.spinOnce(1, True)
+
+    def draw_contour(self):
+        """Рисует 3D контуры в окне Viz"""
+        # Удаляем старые виджеты контуров
+        for widget_name in self.contour_widgets:
+            self.win.removeWidget(widget_name)
+        self.contour_widgets.clear()
+
+
+        # Если есть данные о 3D контурах
+        if self.state.current_contour_3d:
+            for contour_idx, contour_3d in enumerate(self.state.current_contour_3d):
+                if len(contour_3d) < 2:
+                    continue  # Пропускаем контуры с недостаточным количеством точек
+
+                # Рисуем линии между точками контура
+                for i in range(len(contour_3d)):
+                    p1 = np.array(contour_3d[i], dtype=np.float32)
+                    p2 = np.array(contour_3d[(i + 1) % len(contour_3d)], dtype=np.float32)
+
+                    # Создаем линию между двумя точками
+                    line_widget = cv2.viz.WLine(p1, p2, color=cv2.viz.Color.red())
+                    widget_name = f"contour_{contour_idx}_line_{i}"
+
+                    self.win.showWidget(widget_name, line_widget)
+                    self.contour_widgets.add(widget_name)
+
+                # Опционально: рисуем точки контура как маленькие сферы
+                for point_idx, point in enumerate(contour_3d):
+                    point_np = np.array(point, dtype=np.float32)
+                    sphere = cv2.viz.WSphere(point_np, radius=0.005, color=cv2.viz.Color.blue())
+                    widget_name = f"contour_{contour_idx}_point_{point_idx}"
+
+                    self.win.showWidget(widget_name, sphere)
+                    self.contour_widgets.add(widget_name)

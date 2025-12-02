@@ -10,6 +10,7 @@ from analysis.functions.detect_light_marker import DetectLightMarker
 from analysis.functions.detect_rect_markers import DetectRectMarkers
 from analysis.functions.draw_plane import DrawPlane
 from analysis.functions.find_contour import FindContour
+from analysis.functions.process_contour import ProcessContour
 from analysis.functions.select_detect_contour_method import SelectDetectContourMethod
 
 
@@ -25,7 +26,8 @@ class MainAnalysisStrategy:
             Method.CREATE_HOMOGRAPHY_TRANSFORM: (Method.DETECT_LIGHT_MARKER, CreateHomographyTransform(self._state)),
             Method.DETECT_LIGHT_MARKER:         (Method.DRAW_PLANE, DetectLightMarker(self._state)),
             Method.DRAW_PLANE:                  (Method.FIND_CONTOUR, DrawPlane(self._state)),
-            Method.FIND_CONTOUR:                (Method.END, FindContour(self._state)),
+            Method.FIND_CONTOUR:                (Method.PROCESS_CONTOUR, FindContour(self._state)),
+            Method.PROCESS_CONTOUR:             (Method.END, ProcessContour(self._state)),
 
             Method.SELECT_METHOD:               (Method.END, SelectDetectContourMethod(self._state)),
             Method.CANNY:                       (Method.END, CannyMethod(self._state)),

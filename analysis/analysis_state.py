@@ -14,6 +14,7 @@ class Method(Enum):
     CREATE_HOMOGRAPHY_TRANSFORM = auto()
     DRAW_PLANE = auto()
     FIND_CONTOUR = auto()
+    PROCESS_CONTOUR = auto()
 
     SELECT_METHOD = auto()
     CANNY = auto()
@@ -28,7 +29,7 @@ class State:
     src_points: List = field(default_factory=list)
 
     current_frame:Optional[np.ndarray] = None
-    current_contour: Optional[List] = None
+    contour: Optional[List] = None
     marker_data: Optional[dict] = None
 
     plane_equation: Optional[Tuple[np.ndarray, float]] = None
