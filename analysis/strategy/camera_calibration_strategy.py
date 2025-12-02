@@ -65,7 +65,6 @@ class CameraCalibrationStrategy:
             all_obj_points = [np.array(pts, dtype=np.float32).reshape(-1, 1, 3) for pts in self.all_obj_points]
             all_img_points = [np.array(pts, dtype=np.float32).reshape(-1, 1, 2) for pts in self.all_img_points]
 
-            # Используем пустые массивы вместо None
             camera_matrix_init = np.zeros((3, 3), dtype=np.float32)
             dist_coeffs_init = np.zeros((5, 1), dtype=np.float32)
 

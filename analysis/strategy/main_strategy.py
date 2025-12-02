@@ -1,8 +1,6 @@
 from analysis.analysis_state import State, Method
 
 import numpy as np
-import cv2
-import base64
 from logging import getLogger
 
 from analysis.functions.adaptive import Adaptive
@@ -23,60 +21,27 @@ class MainAnalysisStrategy:
         self.__logger = getLogger(type(self).__name__)
 
         self._transition = {
-            Method.START:                       Method.DETECT_RECT_MARKERS,
-            Method.DETECT_RECT_MARKERS:         Method.DETECT_LIGHT_MARKER,
-            Method.DETECT_LIGHT_MARKER:         Method.CREATE_HOMOGRAPHY_TRANSFORM,
-            Method.CREATE_HOMOGRAPHY_TRANSFORM: Method.DRAW_PLANE,
-            Method.DRAW_PLANE:                  Method.FIND_CONTOUR,
-            Method.FIND_CONTOUR:                Method.END,
+            Method.DETECT_RECT_MARKERS:         (Method.CREATE_HOMOGRAPHY_TRANSFORM, DetectRectMarkers(self._state)),
+            Method.CREATE_HOMOGRAPHY_TRANSFORM: (Method.DETECT_LIGHT_MARKER, CreateHomographyTransform(self._state)),
+            Method.DETECT_LIGHT_MARKER:         (Method.DRAW_PLANE, DetectLightMarker(self._state)),
+            Method.DRAW_PLANE:                  (Method.FIND_CONTOUR, DrawPlane(self._state)),
+            Method.FIND_CONTOUR:                (Method.END, FindContour(self._state)),
 
-            Method.CANNY:                       Method.END,
-            Method.ADAPTIVE:                    Method.END
+            Method.SELECT_METHOD:               (Method.END, SelectDetectContourMethod(self._state)),
+            Method.CANNY:                       (Method.END, CannyMethod(self._state)),
+            Method.ADAPTIVE:                    (Method.END, Adaptive(self._state))
         }  # переходы между состояниями
 
-        self.detect_rect_markers = DetectRectMarkers(self._state)
-        self.detect_light_marker = DetectLightMarker(self._state)
-        self.create_homography_transform = CreateHomographyTransform(self._state)
-        self.draw_plane = DrawPlane(self._state)
-        self.find_contour = FindContour(self._state)
-
-        self.select_method = SelectDetectContourMethod(self._state)
-        self.canny = CannyMethod(self._state)
-        self.adaptive = Adaptive(self._state)
-
     def __call__(self, frame:np.ndarray)->np.ndarray:
-        self._state.method = Method.START
+        self._state.method = Method.DETECT_RECT_MARKERS
 
-        self._state.current_frame = frame
+        self._state.current_frame = frame.copy()
 
         while self._state.method != Method.END:
-            match self._state.method:
-                case Method.ERROR:
-                    return frame  # при ошибке в процессе обработки возвращает необработанную картинку
-                case Method.START:
-                    self._state.method = self._transition[self._state.method]
-                case Method.DETECT_RECT_MARKERS:
-                    self._state.method = self._transition[self._state.method]
-                    self.detect_rect_markers()
-                case Method.DETECT_LIGHT_MARKER:
-                    self._state.method = self._transition[self._state.method]
-                    self.detect_light_marker()
-                case Method.CREATE_HOMOGRAPHY_TRANSFORM:
-                    self._state.method = self._transition[self._state.method]
-                    self.create_homography_transform()
-                case Method.DRAW_PLANE:
-                    self._state.method = self._transition[self._state.method]
-                    self.draw_plane()
-                case Method.FIND_CONTOUR:
-                    self._state.method = self._transition[self._state.method]
-                    self.find_contour()
-                case Method.SELECT_METHOD:
-                    self.select_method()
-                case Method.CANNY:
-                    self._state.method = self._transition[self._state.method]
-                    self.canny()
-                case Method.ADAPTIVE:
-                    self._state.method = self._transition[self._state.method]
-                    self.adaptive()
+            if self._state.method == Method.ERROR:
+                return frame  # При ошибке возвращаем необработанный кадр
+            next_method, method = self._transition[ self._state.method]
+            self._state.method = next_method
+            method()
 
         return self._state.current_frame

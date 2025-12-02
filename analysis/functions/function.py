@@ -1,3 +1,4 @@
+import traceback
 from abc import ABC, abstractmethod
 from functools import wraps
 from logging import getLogger
@@ -12,14 +13,15 @@ def handle_exceptions(func):
         try:
             return func(self, *args, **kwargs)
         except Exception as e:
-            self.__logger.error(f'Error in {type(self).__name__}: {e}')
+            self._logger.error("Error in %s: %s", func.__name__, traceback.format_exc())
+            # self._logger.error(e)
             self._state.method = Method.ERROR
     return wrapper
 
 class Function(ABC):
     """Функции, на которые разбивается алгоритм"""
     def __init__(self, state:State):
-        self.__logger = getLogger(type(self).__name__)
+        self._logger = getLogger(type(self).__name__)
         self._state = state
 
     @abstractmethod

@@ -1,7 +1,8 @@
+from typing import Callable
+
 import numpy as np
 
 from analysis.analysis_config import Config
-from analysis.strategy.analysis_strategy import AnalysisStrategyInterface
 from analysis.strategy.camera_calibration_strategy import CameraCalibrationStrategy
 
 
@@ -9,7 +10,7 @@ class FacadeAnalysis:
     """Класс, через который осуществляется взаимодействие обработки с сайтом
     Данный класс создан 24.11.25. Без намеков
     """
-    def __init__(self, strategy:AnalysisStrategyInterface):
+    def __init__(self, strategy:Callable[[np.ndarray],np.ndarray]):
         self._camera_calibration = CameraCalibrationStrategy()
         self._is_calibrated = Config.load_calibration()
 

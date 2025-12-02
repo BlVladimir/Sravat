@@ -1,7 +1,7 @@
 from array import array
 
 from analysis.analysis_config import Config
-from analysis.analysis_state import State
+from analysis.analysis_state import State, Method
 from analysis.functions.function import Function, handle_exceptions
 
 import numpy as np
@@ -25,9 +25,15 @@ class DetectRectMarkers(Function):
         corners, ids, rejected = self.detector_rect_markers.detectMarkers(frame)
 
         if ids is None:
+            self.__exit()
             return
 
         cv2.aruco.drawDetectedMarkers(frame, corners, ids)
+
+        if len(corners) != 4:
+            self.__exit()
+            return
+
         centers = []
         marker_data = {}  # {id: {'center': (x, y), 'corners': [(x1,y1), ...], 'rvec': rvec, 'tvec': tvec}}
 
@@ -38,12 +44,13 @@ class DetectRectMarkers(Function):
 
             marker_corners = corner[0]
             reordered_corners = list(reversed(marker_corners))
-            tvec = self.estimate_marker_3d_pose(reordered_corners)
+            tvec, rvec = self.estimate_marker_3d_pose(reordered_corners)
 
             marker_data[int(marker_id)] = {
                 'center': tuple(center),
                 'corners': [tuple(map(float, c)) for c in reordered_corners],
-                'tvec': tvec
+                'tvec': tvec.squeeze(),
+                'rvec': rvec
             }
 
             cv2.circle(frame, tuple(center.astype(int)), 3, Config.colors['center'], -1)
@@ -72,7 +79,7 @@ class DetectRectMarkers(Function):
         marker_corners_2d = np.array(marker_corners_2d, dtype=np.float32)
 
         # Решаем задачу PnP
-        success, _, tvec = cv2.solvePnP(
+        success, rvec, tvec = cv2.solvePnP(
             object_points,
             marker_corners_2d,
             Config.camera_matrix,
@@ -80,7 +87,12 @@ class DetectRectMarkers(Function):
         )
 
         if success:
-            return tvec  # вектор вращения и вектор перемещения
+            return tvec, rvec  # вектор вращения и вектор перемещения
         else:
-            self.__logger.warning("Can't estimate marker pose")
-            return np.zeros(3, dtype=np.float32)
+            self._logger.warning("Can't estimate marker pose")
+            return np.zeros(3, dtype=np.float32), np.zeros(3, dtype=np.float32)
+
+    def __exit(self):
+        self._state.centers = []
+        self._state.src_points = []
+        self._state.method = Method.FIND_CONTOUR

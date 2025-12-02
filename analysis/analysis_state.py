@@ -1,6 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Optional
+from typing import Optional, List, Tuple
 import numpy as np
 
 
@@ -22,12 +22,15 @@ class Method(Enum):
 @dataclass
 class State:
     """Хранит переменные, которые используют функции обнаружения"""
-    method:Method = Method.START
+    method:Method = Method.DETECT_RECT_MARKERS
 
-    centers = []
-    src_points = []
+    centers: List[np.ndarray] = field(default_factory=list)
+    src_points: List = field(default_factory=list)
 
     current_frame:Optional[np.ndarray] = None
-    current_contour = None
-    marker_data = None
+    current_contour: Optional[List] = None
+    marker_data: Optional[dict] = None
+
+    plane_equation: Optional[Tuple[np.ndarray, float]] = None
+    current_contour_3d: List[List[np.ndarray]] = field(default_factory=list)
 
