@@ -32,14 +32,14 @@ class CreateHomographyTransform(Function):
     @handle_exceptions
     def __call__(self, *args, **kwargs):
         """Создает гомографию для преобразования плоскости"""
-        centers = self.state.centers
+        centers = self._state.centers
 
         if len(centers) != 4:
-            self.state.centers = []
-            self.state.src_points = None
-            self.state.method = Method.FIND_CONTOUR
+            self._state.centers = []
+            self._state.src_points = None
+            self._state.method = Method.FIND_CONTOUR
             return
         # Сортируем точки
         src_points = np.float32(self.sort_points(centers))
 
-        self.state.src_points = src_points
+        self._state.src_points = src_points

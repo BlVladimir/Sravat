@@ -13,10 +13,10 @@ class DrawPlane(Function):
     @handle_exceptions
     def __call__(self, *args, **kwargs):
         """Рисует плоскость и маркеры на кадре"""
-        frame = self.state.current_frame
-        src_points = self.state.src_points
+        frame = self._state.current_frame
+        src_points = self._state.src_points
 
-        if len(self.state.centers) == 4 and src_points is not None:
+        if len(self._state.centers) == 4 and src_points is not None:
             pts = src_points.astype(int)
 
             # Создаём маску четырёхугольника
@@ -40,4 +40,4 @@ class DrawPlane(Function):
             for i, (point, color) in enumerate(zip(pts, Config.colors['corners'])):
                 cv2.circle(frame, tuple(point), 3, color, -1)
 
-        self.state.current_frame = frame
+        self._state.current_frame = frame

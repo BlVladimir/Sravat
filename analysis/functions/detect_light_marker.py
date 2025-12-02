@@ -12,7 +12,7 @@ class DetectLightMarker(Function):
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):
-        frame = self.state.current_frame
+        frame = self._state.current_frame
         corners, ids, rejected = self.detector_light_markers.detectMarkers(frame)
 
         if ids is None:
@@ -21,4 +21,4 @@ class DetectLightMarker(Function):
         output_frame = frame.copy()
         cv2.aruco.drawDetectedMarkers(output_frame, corners, ids)
 
-        self.state.current_frame = output_frame
+        self._state.current_frame = output_frame

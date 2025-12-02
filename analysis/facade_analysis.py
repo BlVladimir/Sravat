@@ -10,15 +10,15 @@ class FacadeAnalysis:
     Данный класс создан 24.11.25. Без намеков
     """
     def __init__(self, strategy:AnalysisStrategyInterface):
-        self.camera_calibration = CameraCalibrationStrategy()
-        self.is_calibrated = Config.load_calibration()
+        self._camera_calibration = CameraCalibrationStrategy()
+        self._is_calibrated = Config.load_calibration()
 
-        self.strategy = strategy
+        self._strategy = strategy
 
     def analyze_frame(self, frame:np.ndarray)->np.ndarray:
-        if self.is_calibrated:
-            return self.strategy(frame)
+        if self._is_calibrated:
+            return self._strategy(frame)
         else:
-            frame = self.camera_calibration(frame)
-            self.is_calibrated = self.camera_calibration.is_calibrated
+            frame = self._camera_calibration(frame)
+            self._is_calibrated = Config.load_calibration()
             return frame

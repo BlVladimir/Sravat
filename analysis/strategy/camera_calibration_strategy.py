@@ -1,4 +1,3 @@
-import os
 from logging import getLogger
 
 import numpy as np
@@ -47,11 +46,12 @@ class CameraCalibrationStrategy:
 
         # Берем первый обнаруженный маркер
         for marker_corner in corners:
-            # Переупорядочиваем углы
             reordered_corners = np.array(list(reversed(marker_corner[0])), dtype=np.float32)
             # Сохраняем данные
-            self.all_obj_points.append(self.marker_3d_points)
-            self.all_img_points.append(reordered_corners)
+            obj_points = self.marker_3d_points.reshape(-1, 1, 3)
+
+            self.all_obj_points.append(obj_points)
+            self.all_img_points.append(reordered_corners.reshape(-1, 1, 2))
         self.captured_count += 1
 
         if self.captured_count >= self.NUM_IMAGES:
@@ -62,12 +62,19 @@ class CameraCalibrationStrategy:
     def _calibrate(self):
         try:
             # Выполняем калибровку
+            all_obj_points = [np.array(pts, dtype=np.float32).reshape(-1, 1, 3) for pts in self.all_obj_points]
+            all_img_points = [np.array(pts, dtype=np.float32).reshape(-1, 1, 2) for pts in self.all_img_points]
+
+            # Используем пустые массивы вместо None
+            camera_matrix_init = np.zeros((3, 3), dtype=np.float32)
+            dist_coeffs_init = np.zeros((5, 1), dtype=np.float32)
+
             ret, self.camera_matrix, self.dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
-                self.all_obj_points,
-                self.all_img_points,
+                all_obj_points,
+                all_img_points,
                 self.image_size,
-                None,  # Начальная camera_matrix
-                None  # Начальные dist_coeffs
+                camera_matrix_init,  # Вместо None
+                dist_coeffs_init  # Вместо None
             )
 
             self.is_calibrated = True

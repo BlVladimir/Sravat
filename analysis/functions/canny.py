@@ -11,12 +11,12 @@ class CannyMethod(Function):
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):
-        frame = self.state.current_frame
+        frame = self._state.current_frame
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         mask = np.zeros(gray.shape, dtype=np.uint8)
-        pts = np.int32(self.state.src_points)
+        pts = np.int32(self._state.src_points)
         cv2.fillPoly(mask, [pts], 255)
 
         # Применяем маску: оставляем только пиксели внутри четырёхугольника
@@ -59,4 +59,4 @@ class CannyMethod(Function):
 
         if approx_contour is not None:
             cv2.drawContours(frame, [approx_contour], -1, Config.colors['contour'], 3)
-            self.state.current_frame =  frame
+            self._state.current_frame =  frame

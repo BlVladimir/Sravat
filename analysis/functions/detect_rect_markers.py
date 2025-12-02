@@ -1,3 +1,5 @@
+from array import array
+
 from analysis.analysis_config import Config
 from analysis.analysis_state import State
 from analysis.functions.function import Function, handle_exceptions
@@ -19,7 +21,7 @@ class DetectRectMarkers(Function):
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):
-        frame = self.state.current_frame
+        frame = self._state.current_frame
         corners, ids, rejected = self.detector_rect_markers.detectMarkers(frame)
 
         if ids is None:
@@ -46,12 +48,11 @@ class DetectRectMarkers(Function):
 
             cv2.circle(frame, tuple(center.astype(int)), 3, Config.colors['center'], -1)
 
-        self.state.current_frame = frame
-        self.state.centers = centers
-        self.state.marker_data = marker_data
+        self._state.current_frame = frame
+        self._state.centers = centers
+        self._state.marker_data = marker_data
 
-    @staticmethod
-    def estimate_marker_3d_pose(marker_corners_2d):
+    def estimate_marker_3d_pose(self, marker_corners_2d):
         """
         Оценивает 3D позицию и ориентацию маркера
 
@@ -81,4 +82,5 @@ class DetectRectMarkers(Function):
         if success:
             return tvec  # вектор вращения и вектор перемещения
         else:
-            return None
+            self.__logger.warning("Can't estimate marker pose")
+            return np.zeros(3, dtype=np.float32)

@@ -1,4 +1,4 @@
-from logging import debug
+from itertools import islice
 
 import cv2
 import numpy as np
@@ -11,6 +11,7 @@ class Run3D:
         """Создает окно Viz с координатными осями. Для работы требует установки OpenCV с Viz"""
         self.state = state
         self.win = cv2.viz.Viz3d("3D Coordinate System")
+
         self.markers = set()
 
     def setup(self):
@@ -20,24 +21,19 @@ class Run3D:
         # Добавляем оси в окно
         self.win.showWidget("axes", axes)
 
-    def show(self):
+        self.markers = set(f"marker_{idx}" for idx in range(4))
         for marker_name in self.markers:
-            self.win.removeWidget(marker_name)
-        self.markers.clear()
+            sphere = cv2.viz.WSphere(np.zeros(3, dtype=np.float32), radius=0.02, color=cv2.viz.Color.green())
+            self.win.showWidget(marker_name, sphere)
 
+    def show(self):
         # Если есть данные о расположении маркеров
         if self.state.marker_data is not None:
-            for idx, data in enumerate(self.state.marker_data.values()):
+            for idx, data  in enumerate(islice(self.state.marker_data.values(), 4)):
                 tvec = data['tvec']
 
-                if tvec is None:
-                    continue
+                pose = cv2.viz.Affine3d(np.zeros(3, dtype=np.float32), tvec)
 
-                point = np.array(tvec).flatten()
-                marker_name = f"marker_{idx}"
-                sphere = cv2.viz.WSphere(point, radius=0.02, color=cv2.viz.Color.green())
-                self.win.showWidget(marker_name, sphere)
-
-                self.markers.add(marker_name)
+                self.win.setWidgetPose(f"marker_{idx}", pose)
 
         self.win.spinOnce(1, True)
