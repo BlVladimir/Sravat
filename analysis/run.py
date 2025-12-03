@@ -18,14 +18,14 @@ class RunTime:
         setup_logging()
         self.logger = getLogger(type(self).__name__)
 
-        self.facade = FacadeAnalysis(MainAnalysisStrategy())
+        self.facade = FacadeAnalysis()
         self.cap = cv2.VideoCapture(0)
 
 
     def __call__(self):
         has_viz = hasattr(cv2, 'viz')
         if has_viz:
-            run3d = Run3D(self.facade._strategy._state)  # нарушать инкапсуляцию можно, если это упрощает тестирование
+            run3d = Run3D(self.facade._main_strategy._state)  # нарушать инкапсуляцию можно, если это упрощает тестирование
             run3d.setup()
         while True:
             if has_viz:
