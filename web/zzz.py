@@ -7,7 +7,7 @@ from analysis.facade_analysis import FacadeAnalysis
 
 class VideoCamera(object):
     def __init__(self):
-        self.video = cv2.VideoCapture(0)
+        self.video = cv2.VideoCapture(1)
 
     def __del__(self):
         self.video.release()
@@ -16,7 +16,9 @@ class VideoCamera(object):
         ret, frame = self.video.read()
         if not ret:
             return None
-        ret, jpeg = cv2.imencode('.jpg', frame)
+        anal_frame = FacadeAnalysis()
+        anall_frame = anal_frame.analyze_frame(frame)
+        ret, jpeg = cv2.imencode('.jpg', anall_frame)
         if not ret:
             return None
         return jpeg.tobytes()
@@ -48,9 +50,8 @@ def index():
 def gen(camera):
     while True:
         frame = camera.get_frame()
-        anal_frame = FacadeAnalysis.analyze_frame(frame)
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + anal_frame + b'\r\n\r\n')
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
 
 
 @app.route('/video_feed')
