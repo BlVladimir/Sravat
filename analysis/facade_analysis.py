@@ -1,3 +1,4 @@
+import logging
 from typing import Callable
 
 import numpy as np
@@ -72,3 +73,11 @@ class FacadeAnalysis:
             frame = self._camera_calibration(frame)
             self._is_calibrated = Config.load_calibration()
             return frame
+
+
+class EmptyFacadeAnalysis:
+    def __init__(self):
+        logging.warn('Фасад создан')
+
+    def analyze_frame(self, frame:np.ndarray)->np.ndarray:
+        return frame
