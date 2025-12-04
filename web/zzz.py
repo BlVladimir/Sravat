@@ -4,19 +4,19 @@ import cv2
 from flask import Flask, render_template, Response
 from analysis.facade_analysis import FacadeAnalysis
 
+anal_frame = FacadeAnalysis()
+
 
 class VideoCamera(object):
     def __init__(self):
-        self.video = cv2.VideoCapture(1)
-
-    def __del__(self):
-        self.video.release()
+        self.video = cv2.VideoCapture(0)
+        if not self.video.isOpened():
+            raise RuntimeError("Не удалось открыть камеру")
 
     def get_frame(self):
         ret, frame = self.video.read()
         if not ret:
             return None
-        anal_frame = FacadeAnalysis()
         anall_frame = anal_frame.analyze_frame(frame)
         ret, jpeg = cv2.imencode('.jpg', anall_frame)
         if not ret:
