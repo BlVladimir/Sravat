@@ -2,6 +2,7 @@ import threading
 import time
 import cv2
 from flask import Flask, render_template, Response
+from analysis.facade_analysis import FacadeAnalysis
 
 
 class VideoCamera(object):
@@ -47,8 +48,9 @@ def index():
 def gen(camera):
     while True:
         frame = camera.get_frame()
+        anal_frame = FacadeAnalysis.analyze_frame(frame)
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
+               b'Content-Type: image/jpeg\r\n\r\n' + anal_frame + b'\r\n\r\n')
 
 
 @app.route('/video_feed')
