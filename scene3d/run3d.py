@@ -30,6 +30,9 @@ class Run3D:
             sphere = cv2.viz.WSphere(np.zeros(3, dtype=np.float32), radius=0.02, color=cv2.viz.Color.green())
             self.win.showWidget(marker_name, sphere)
 
+        sphere = cv2.viz.WSphere(np.zeros(3, dtype=np.float32), radius=0.02, color=cv2.viz.Color.green())
+        self.win.showWidget('bottom_point', sphere)
+
     def show(self):
         # Если есть данные о расположении маркеров
         if self.state.marker_data is not None:
@@ -39,6 +42,10 @@ class Run3D:
                 pose = cv2.viz.Affine3d(np.zeros(3, dtype=np.float32), tvec)
 
                 self.win.setWidgetPose(f"marker_{idx}", pose)
+
+        if self.state.bottom_point is not None:
+            pose = cv2.viz.Affine3d(np.zeros(3, dtype=np.float32), self.state.bottom_point)
+            self.win.setWidgetPose('bottom_point', pose)
 
         self.draw_contour()
 

@@ -35,3 +35,4 @@ class State:
     plane_equation: Optional[Tuple[np.ndarray, float]] = None
     current_contour_3d: List[List[np.ndarray]] = field(default_factory=list)
 
+    bottom_point = None
