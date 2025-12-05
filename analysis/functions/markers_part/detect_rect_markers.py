@@ -58,7 +58,8 @@ class DetectRectMarkers(Function):
         self._state.current_frame = frame
         self._state.src_points = np.float32(self._sort_points(centers))
         self._state.marker_data = marker_data
-        self._state.dvec = self._calculate_diagonal_vector()
+        self._state.dvecs = self._calculate_diagonal_vector()
+        self._state.start_vecs = (self._ids_diag[1], self._ids_diag[0])
 
     def _estimate_marker_3d_pose(self, marker_corners_2d):
         """Оценивает 3D позицию и ориентацию маркера"""
@@ -116,11 +117,8 @@ class DetectRectMarkers(Function):
 
     def _calculate_diagonal_vector(self):
         """Вычисляет 3D вектор диагонали прямоугольника маркеров"""
-        tl_2d, _, br_2d, _ = self._state.src_points
+        tl_2d, tr_2d, br_2d, bl2d = self._state.src_points
         marker_data = self._state.marker_data
-
-        tl_3d = None
-        br_3d = None
 
         if not self._ids_diag:
             for marker_id, data in marker_data.items():
@@ -133,11 +131,21 @@ class DetectRectMarkers(Function):
                 if np.linalg.norm(marker_center - br_2d) < 1.0:
                     br_3d = data['tvec']
                     self._ids_diag.append(marker_id)
+
+                if np.linalg.norm(marker_center - tr_2d) < 1.0:
+                    tr_3d = data['tvec']
+                    self._ids_diag.append(marker_id)
+
+                if np.linalg.norm(marker_center - bl2d) < 1.0:
+                    bl_3d = data['tvec']
+                    self._ids_diag.append(marker_id)
         else:
             tl_3d = marker_data[self._ids_diag[0]]['tvec']
-            br_3d = marker_data[self._ids_diag[1]]['tvec']
+            tr_3d = marker_data[self._ids_diag[1]]['tvec']
+            br_3d = marker_data[self._ids_diag[2]]['tvec']
+            bl_3d = marker_data[self._ids_diag[3]]['tvec']
 
-        return br_3d - tl_3d
+        return br_3d - tr_3d, bl_3d - tl_3d
 
     def reset(self):
         self._ids_diag = []

@@ -34,6 +34,7 @@ class ProcessContour(Function):
         bottom_point = points[max_y_idx]
 
         bottom_point_3d = self.project_bottom_point_to_3d(bottom_point)
+        self._state.scanning_data.append((self._state.dvecs[0], self._state.dvecs[1], self._state.start_vecs[0], self._state.start_vecs[1], bottom_point_3d))
 
         self._state.bottom_point = bottom_point_3d
 

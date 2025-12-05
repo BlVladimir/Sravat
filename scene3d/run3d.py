@@ -16,6 +16,8 @@ class Run3D:
         self.markers = set()
         self.contour_widgets = set()
 
+        self.vector_widgets = set()
+
         self._logger = getLogger(type(self).__name__)
 
     def setup(self):
@@ -48,6 +50,7 @@ class Run3D:
             self.win.setWidgetPose('bottom_point', pose)
 
         self.draw_contour()
+        self.draw_diagonal_vectors()
 
         self.win.spinOnce(1, True)
 
@@ -85,3 +88,46 @@ class Run3D:
 
                     self.win.showWidget(widget_name, sphere)
                     self.contour_widgets.add(widget_name)
+
+    def draw_diagonal_vectors(self):
+        """Рисует диагональные векторы из состояния"""
+        if not self.state.marker_data:
+            return
+
+        old_widgets = [w for w in self.contour_widgets if w.startswith("diag_vec_")]
+        for widget_name in old_widgets:
+            self.win.removeWidget(widget_name)
+            self.contour_widgets.remove(widget_name)
+
+        colors = [cv2.viz.Color.cyan(), cv2.viz.Color.magenta()]
+
+        for i, (marker_id, dvec) in enumerate(zip(self.state.start_vecs, self.state.dvecs)):
+            start_point = self.state.marker_data[marker_id]['tvec']
+
+            start_point_np = np.array(start_point, dtype=np.float32)
+            dvec_np = np.array(dvec, dtype=np.float32)
+
+            end_point = start_point_np + dvec_np
+
+            line_widget = cv2.viz.WLine(start_point_np, end_point, color=colors[i])
+            line_name = f"diag_vec_{i}_line"
+            self.win.showWidget(line_name, line_widget)
+            self.contour_widgets.add(line_name)
+
+            start_sphere = cv2.viz.WSphere(
+                start_point_np,
+                radius=0.008,
+                color=cv2.viz.Color.green()
+            )
+            start_name = f"diag_vec_{i}_start"
+            self.win.showWidget(start_name, start_sphere)
+            self.contour_widgets.add(start_name)
+
+            end_sphere = cv2.viz.WSphere(
+                end_point,
+                radius=0.008,
+                color=colors[i]
+            )
+            end_name = f"diag_vec_{i}_end"
+            self.win.showWidget(end_name, end_sphere)
+            self.contour_widgets.add(end_name)

@@ -27,7 +27,7 @@ class ContourHandler:
     def process_frame(self):
         """Обрабатывает текущий кадр и запускает анализ контура при необходимости."""
 
-        self._cur_dvec = self._state.dvec
+        self._cur_dvec = self._state.dvecs[0]
 
         if self._prev_dvec is None:
             self._prev_dvec = self._cur_dvec
@@ -37,7 +37,7 @@ class ContourHandler:
         norm1 = float(np.linalg.norm(self._cur_dvec))
         norm2 = float(np.linalg.norm(self._prev_dvec))
 
-        angle = np.arccos(np.clip((self._cur_dvec @ self._prev_dvec) / (norm1 * norm2), -1.0, 1.0))
+        angle = np.arccos((self._cur_dvec @ self._prev_dvec) / (norm1 * norm2))
         self._logger.info(angle)
 
         if angle > np.pi / Config.PHOTO_COUNTS:
@@ -45,6 +45,7 @@ class ContourHandler:
             self._sum_angle += angle
             self._process()
             return
+
         self._state.method = Method.END
 
     def reset(self):

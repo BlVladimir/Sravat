@@ -32,6 +32,8 @@ class State:
     plane_equation: Optional[Tuple[np.ndarray, float]] = None
     current_contour_3d: List[List[np.ndarray]] = field(default_factory=list)
 
+    scanning_data: List[Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = field(default_factory=list)
     bottom_point = None
 
-    dvec:Optional[np.ndarray] = None
+    dvecs:Optional[Tuple[np.ndarray, np.ndarray]] = None
+    start_vecs = None

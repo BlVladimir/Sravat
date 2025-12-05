@@ -14,6 +14,7 @@ class Config:
 
     MARKER_SIZE = 0.2
     PHOTO_COUNTS = 10
+    EDGE = 100
 
     camera_matrix = None
     dist_coeffs = None
