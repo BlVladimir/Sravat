@@ -43,7 +43,8 @@ class FindContour(Function):
 
         contours, _ = cv2.findContours(thresh_clean, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        contour = max(contours, key=cv2.contourArea)
+        sorted_contours = sorted(contours, key=cv2.contourArea, reverse=True)
+        contour = sorted_contours[2]
         cv2.drawContours(frame, [contour], -1, (0, 255, 0), 2, cv2.LINE_AA)
 
         self._state.current_frame = frame

@@ -29,12 +29,12 @@ class DrawPlane(Function):
         frame[mask_inverted == 255] = [255, 255, 255]
 
         # Рисуем контур плоскости
-        cv2.polylines(frame, [pts], True, Config.colors['contour'], 3)
+        cv2.polylines(frame, [pts], True, Config.COLORS['contour'], 3)
 
         cv2.addWeighted(frame, 0.2, frame, 0.8, 0, frame)
 
         # Рисуем угловые точки
-        for i, (point, color) in enumerate(zip(pts, Config.colors['corners'])):
+        for i, (point, color) in enumerate(zip(pts, Config.COLORS['corners'])):
             cv2.circle(frame, tuple(point), 3, color, -1)
 
         self._state.current_frame = frame

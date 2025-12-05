@@ -26,3 +26,6 @@ class Function(ABC):
 
     @abstractmethod
     def __call__(self, *args, **kwargs)->Any: ...
+
+    def reset(self):
+        pass

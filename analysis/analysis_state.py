@@ -8,6 +8,7 @@ class Method(Enum):
     START = auto()  # вход в обработку
     END = auto()  # выход из обработки
     ERROR = auto()  # ошибка в процессе выполнения
+    END_MARKER_PART = auto()
 
     DETECT_RECT_MARKERS = auto()
     DETECT_LIGHT_MARKER = auto()
@@ -15,10 +16,6 @@ class Method(Enum):
     DRAW_PLANE = auto()
     FIND_CONTOUR = auto()
     PROCESS_CONTOUR = auto()
-
-    SELECT_METHOD = auto()
-    CANNY = auto()
-    ADAPTIVE = auto()
 
 @dataclass
 class State:
@@ -36,3 +33,5 @@ class State:
     current_contour_3d: List[List[np.ndarray]] = field(default_factory=list)
 
     bottom_point = None
+
+    dvec:Optional[np.ndarray] = None

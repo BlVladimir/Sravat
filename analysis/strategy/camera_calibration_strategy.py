@@ -26,7 +26,7 @@ class CameraCalibrationStrategy:
         self.dist_coeffs = None
         self.is_calibrated = False
 
-        self.size = Config.marker_size
+        self.size = Config.MARKER_SIZE
         self.marker_3d_points = np.array([
             [-self.size / 2, -self.size / 2, 0],
             [self.size / 2, -self.size / 2, 0],

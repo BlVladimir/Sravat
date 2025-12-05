@@ -16,6 +16,8 @@ class DetectRectMarkers(Function):
         self.aruco_rect_params = cv2.aruco.DetectorParameters()
         self.detector_rect_markers = cv2.aruco.ArucoDetector(self.aruco_rect_dict, self.aruco_rect_params)
 
+        self._ids_diag = []
+
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):
@@ -51,22 +53,17 @@ class DetectRectMarkers(Function):
                 'rvec': rvec
             }
 
-            cv2.circle(frame, tuple(center.astype(int)), 3, Config.colors['center'], -1)
+            cv2.circle(frame, tuple(center.astype(int)), 3, Config.COLORS['center'], -1)
 
         self._state.current_frame = frame
         self._state.src_points = np.float32(self._sort_points(centers))
         self._state.marker_data = marker_data
+        self._state.dvec = self._calculate_diagonal_vector()
 
     def _estimate_marker_3d_pose(self, marker_corners_2d):
-        """
-        Оценивает 3D позицию и ориентацию маркера
+        """Оценивает 3D позицию и ориентацию маркера"""
 
-        Args:
-            marker_corners_2d: 2D координаты углов маркера (4 точки)
-        """
-
-        # Маркер лежит в плоскости Z=0
-        size = Config.marker_size
+        size = Config.MARKER_SIZE
         object_points = np.array([
             [-size / 2, -size / 2, 0],
             [size / 2, -size / 2, 0],
@@ -92,7 +89,7 @@ class DetectRectMarkers(Function):
 
     def __exit(self):
         self._state.src_points = []
-        self._state.method = Method.FIND_CONTOUR
+        self._state.method = Method.END
 
     @staticmethod
     def _sort_points(points):
@@ -116,3 +113,31 @@ class DetectRectMarkers(Function):
         bl, br = bottom_sorted[0], bottom_sorted[1]
 
         return [tl, tr, br, bl]
+
+    def _calculate_diagonal_vector(self):
+        """Вычисляет 3D вектор диагонали прямоугольника маркеров"""
+        tl_2d, _, br_2d, _ = self._state.src_points
+        marker_data = self._state.marker_data
+
+        tl_3d = None
+        br_3d = None
+
+        if not self._ids_diag:
+            for marker_id, data in marker_data.items():
+                marker_center = np.array(data['center'], dtype=np.float32)
+
+                if np.linalg.norm(marker_center - tl_2d) < 1.0:
+                    tl_3d = data['tvec']
+                    self._ids_diag.append(marker_id)
+
+                if np.linalg.norm(marker_center - br_2d) < 1.0:
+                    br_3d = data['tvec']
+                    self._ids_diag.append(marker_id)
+        else:
+            tl_3d = marker_data[self._ids_diag[0]]['tvec']
+            br_3d = marker_data[self._ids_diag[1]]['tvec']
+
+        return br_3d - tl_3d
+
+    def reset(self):
+        self._ids_diag = []
