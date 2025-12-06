@@ -3,7 +3,7 @@ from typing import Tuple, Any
 
 from analysis.analysis_config import Config
 from analysis.analysis_state import State
-from analysis.functions.function import Function
+from analysis.functions.function import Function, handle_exceptions
 import numpy as np
 import scanning_optimized
 
@@ -12,10 +12,13 @@ class HandleScanningData(Function):
     def __init__(self, state:State) -> None:
         super().__init__(state)
 
+    @handle_exceptions
     def __call__(self, *args, **kwargs):
         contours = map(self._transform_to_local_coordinates, self._state.contour)
         main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt, _ = self._state.scanning_data[0]
         parallelepiped = self._calculate_parallelepiped(main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt)
+        object3d = scanning_optimized.process_contours_optimized(parallelepiped, contours)
+        self._state.object3d = object3d
         self._state.scanning_data = []
 
     @staticmethod

@@ -13,8 +13,8 @@ def handle_exceptions(func):
         try:
             return func(self, *args, **kwargs)
         except Exception as e:
-            # self._logger.error("Error in %s: %s", func.__name__, traceback.format_exc())
-            self._logger.error(e)
+            self._logger.error("Error in %s: %s", func.__name__, traceback.format_exc())
+            # self._logger.error(e)
             self._state.method = Method.ERROR
     return wrapper
 

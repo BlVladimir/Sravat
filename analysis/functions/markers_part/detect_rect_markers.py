@@ -83,14 +83,14 @@ class DetectRectMarkers(Function):
         )
 
         if success:
-            return tvec, rvec  # вектор вращения и вектор перемещения
+            return tvec, rvec
         else:
             self._logger.warning("Can't estimate marker pose")
             return np.zeros(3, dtype=np.float32), np.zeros(3, dtype=np.float32)
 
     def __exit(self):
         self._state.src_points = []
-        self._state.method = Method.END
+        self._state.method = Method.ERROR
 
     @staticmethod
     def _sort_points(points):
