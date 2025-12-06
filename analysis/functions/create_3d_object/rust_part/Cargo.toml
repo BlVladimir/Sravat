@@ -1,0 +1,12 @@
+[package]
+name = "scanning_optimized"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "scanning_optimized"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.19", features = ["extension-module"] }
+rayon = "1.7"
