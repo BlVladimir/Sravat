@@ -105,7 +105,12 @@ fn process_contours_optimized(
             .collect();
 
         contours_vec.par_iter().for_each(|(contour_points, rotation_matrix)| {
-            let contour_2d: Vec<(f32, f32)> = contour_points
+            let rotated_contour: Vec<Point3D> = contour_points
+                .iter()
+                .map(|p| rotate_point(p, rotation_matrix))
+                .collect();
+
+            let contour_2d: Vec<(f32, f32)> = rotated_contour
                 .iter()
                 .map(|p| (p[0], p[1]))
                 .collect();

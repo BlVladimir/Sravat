@@ -1,7 +1,6 @@
 import math
 from typing import Tuple, Any
 
-from analysis.analysis_config import Config
 from analysis.analysis_state import State
 from analysis.functions.function import Function, handle_exceptions
 import numpy as np
@@ -9,12 +8,13 @@ import scanning_optimized
 
 
 class HandleScanningData(Function):
-    def __init__(self, state:State) -> None:
+    def __init__(self, state:State, edge:int) -> None:
         super().__init__(state)
+        self._EDGE = edge
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):
-        contours = map(self._transform_to_local_coordinates, self._state.contour)
+        contours = list(map(self._transform_to_local_coordinates, self._state.contour))
         main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt, _ = self._state.scanning_data[0]
         parallelepiped = self._calculate_parallelepiped(main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt)
         object3d = scanning_optimized.process_contours_optimized(parallelepiped, contours)
@@ -73,8 +73,7 @@ class HandleScanningData(Function):
 
         return transformed_points, R
 
-    @staticmethod
-    def _calculate_parallelepiped(main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt):
+    def _calculate_parallelepiped(self, main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt):
         """Создание параллелепипеда, из которого будет вырезан объект"""
         norm1 = float(np.linalg.norm(main_vec))
         norm2 = float(np.linalg.norm(auxiliary_vec))
@@ -84,19 +83,26 @@ class HandleScanningData(Function):
         h = min(1, b)
 
         r = origin_auxiliary_pnt - origin_main_pnt
-        norm1 = float(np.linalg.norm(main_vec))
-        norm2 = float(np.linalg.norm(r))
-        cos_alpha = (main_vec @ r) / (norm1 * norm2)
-        sin_alpha = np.sqrt(1 - cos_alpha ** 2)
+        norm2_r = float(np.linalg.norm(r))
+        cos_alpha_r = (main_vec @ r) / (norm1 * norm2_r)
+        sin_alpha_r = np.sqrt(1 - cos_alpha_r ** 2)
 
-        y0 = -(norm2/norm1)*sin_alpha
+        y0 = -(norm2_r/norm1)*sin_alpha_r
 
-        step = h/Config.EDGE
+        step = max(1, b)/self._EDGE
 
         parallelepiped = np.array([[(x+0.5)*step, (y+0.5)*step, (z+0.5)*step]
-                                    for x in range(0, math.ceil(1/step))
-                                    for y in range(math.floor(y0 / step), math.ceil((y0 + b) / step))
-                                    for z in range(0, math.ceil(h / step)+1)])
+                                    for x in range(0, self._special_round(1/step))
+                                    for y in range(self._special_round(y0 / step, 'floor'), self._special_round((y0 + b) / step))
+                                    for z in range(0, self._special_round(h / step))])
 
         return parallelepiped
 
+    @staticmethod
+    def _special_round(x, direction:str='ceil'):
+        """Округление с порогом, чтобы float погрешность не добавляла точек"""
+        threshold = 1e-6
+        if direction == 'ceil':
+            return math.ceil(x - threshold)
+        else:
+            return math.floor(x + threshold)
