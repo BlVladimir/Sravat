@@ -1,3 +1,4 @@
+import logging
 from typing import Callable
 
 import numpy as np
@@ -9,7 +10,6 @@ from analysis.strategy.main_strategy import MainAnalysisStrategy
 
 class FacadeAnalysis:
     """Класс, через который осуществляется взаимодействие обработки с сайтом
-    Данный класс создан 24.11.25. Без намеков
     ......................^@@(''.....''@J'..........................
     .................'@+.'................''''b@^...................
     .............'`B'............................*r'................
@@ -72,3 +72,11 @@ class FacadeAnalysis:
             frame = self._camera_calibration(frame)
             self._is_calibrated = Config.load_calibration()
             return frame
+
+
+class EmptyFacadeAnalysis:
+    def __init__(self):
+        logging.warn('Фасад создан')
+
+    def analyze_frame(self, frame:np.ndarray)->np.ndarray:
+        return frame

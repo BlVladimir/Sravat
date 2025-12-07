@@ -1,0 +1,1 @@
+/Users/vblinov/PycharmProjects/Sravat/analysis/functions/create_3d_object/rust_part/target/debug/libscanning_optimized.dylib: /Users/vblinov/PycharmProjects/Sravat/analysis/functions/create_3d_object/rust_part/src/lib.rs

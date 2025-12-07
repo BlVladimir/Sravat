@@ -2,7 +2,7 @@ import threading
 import time
 import cv2
 from flask import Flask, render_template, Response
-from analysis.facade_analysis import FacadeAnalysis
+from analysis.facade_analysis import FacadeAnalysis, EmptyFacadeAnalysis
 
 anal_frame = FacadeAnalysis()
 
