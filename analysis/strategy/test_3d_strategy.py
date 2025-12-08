@@ -17,13 +17,12 @@ class Test3DStrategy:
 
         self._markers_handler = MarkersHandler(self._state)
 
-        data = (np.array([3, 0, 0]),
-                np.array([0, 4, 0]),
-                np.array([0, 2, 0]),
-                np.array([1, 1, 0]),
-                np.array([[100,
-                           np.sin(n * 2 * np.pi / 360),
-                           np.cos(n * 2 * np.pi / 360)]
+        data = (np.array([3, 0, 0], dtype=np.float32),
+                np.array([0, 4, 0], dtype= np.float32),
+                np.array([0, 2, 0], dtype= np.float32),
+                np.array([1, 1, 0], dtype= np.float32),
+                np.array([[1.5 + 0.9 * np.cos(n * 2 * np.pi / 360),
+                           2.0 + 1.2 * np.sin(n * 2 * np.pi / 360), 0.5]
                           for n in range(0, 360)], dtype=np.float32))
 
         scanning_data = list(repeat(data, 20))

@@ -16,12 +16,34 @@ class HandleScanningData(Function):
     @handle_exceptions
     def __call__(self, *args, **kwargs):
         """Из контуров создает массив из центров кубов, которые вместе образуют объект"""
-        contours = list(map(self._transform_to_local_coordinates, self._state.contour))
+        contours = list(map(self._transform_to_local_coordinates, self._state.scanning_data))
+
         main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt, _ = self._state.scanning_data[0]
         parallelepiped = self._calculate_parallelepiped(main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt)
         points = scanning_optimized.process_contours_optimized(parallelepiped, contours)
 
+        self._logger.debug(f'Number of contours: {len(contours)}')
+        self._logger.debug(f'Parallelepiped shape: {parallelepiped.shape}')
+        self._logger.debug(f'Parallelepiped range: X[{parallelepiped[:, 0].min():.3f}, {parallelepiped[:, 0].max():.3f}], '
+                          f'Y[{parallelepiped[:, 1].min():.3f}, {parallelepiped[:, 1].max():.3f}], '
+                          f'Z[{parallelepiped[:, 2].min():.3f}, {parallelepiped[:, 2].max():.3f}]')
+
+        first_contour_points, first_rotation = contours[0]
+        self._logger.debug(f'First contour points shape: {first_contour_points.shape}')
+        self._logger.debug(f'First contour range BEFORE rotation: '
+                           f'X[{first_contour_points[:, 0].min():.3f}, {first_contour_points[:, 0].max():.3f}], '
+                           f'Y[{first_contour_points[:, 1].min():.3f}, {first_contour_points[:, 1].max():.3f}], '
+                           f'Z[{first_contour_points[:, 2].min():.3f}, {first_contour_points[:, 2].max():.3f}]')
+
+        rotated = first_contour_points @ first_rotation.T
+        self._logger.debug(f'First contour range AFTER rotation: '
+                           f'X[{rotated[:, 0].min():.3f}, {rotated[:, 0].max():.3f}], '
+                           f'Y[{rotated[:, 1].min():.3f}, {rotated[:, 1].max():.3f}], '
+                           f'Z[{rotated[:, 2].min():.3f}, {rotated[:, 2].max():.3f}]')
+
         mask = points <= self._THRESHOLD
+        self._logger.debug(f'Mask: {mask}')
+        self._logger.debug(f'Points: {points}')
 
         self._state.object3d = parallelepiped[mask]
         self._state.scanning_data = []
@@ -30,10 +52,10 @@ class HandleScanningData(Function):
     def _transform_to_local_coordinates(data:Tuple[np.ndarray, np.ndarray, np.ndarray, Any, np.ndarray]):
         """Преобразует точки в систему координат от диагонали."""
         main_vector, auxiliary_vector, origin_point, _ , points_array = data
-        main_vec = np.array(main_vector, dtype=float)
-        aux_vec = np.array(auxiliary_vector, dtype=float)
-        origin = np.array(origin_point, dtype=float)
-        points = np.array(points_array, dtype=float)
+        main_vec = np.array(main_vector, dtype=np.float32)
+        aux_vec = np.array(auxiliary_vector, dtype=np.float32)
+        origin = np.array(origin_point, dtype=np.float32)
+        points = np.array(points_array, dtype=np.float32)
 
         scale = np.linalg.norm(main_vec)
 
@@ -63,20 +85,38 @@ class HandleScanningData(Function):
         axis = np.cross(normal, target)
         axis_norm = np.linalg.norm(axis)
 
-        axis = axis / axis_norm
+        if axis_norm < 1e-6:
+            cos_angle = np.dot(normal, target)
+            if cos_angle > 0:
+                R = np.eye(3, dtype=np.float32)
+            else:
+                if abs(normal[0]) < 0.9:
+                    axis = np.array([1, 0, 0], dtype=np.float32)
+                else:
+                    axis = np.array([0, 1, 0], dtype=np.float32)
+                axis = np.cross(normal, axis)
+                axis /= np.linalg.norm(axis)
 
-        cos_angle = np.dot(normal, target)
-        cos_angle = np.clip(cos_angle, -1.0, 1.0)
-        angle = np.arccos(cos_angle)
+                K = np.array([[0, -axis[2], axis[1]],
+                              [axis[2], 0, -axis[0]],
+                              [-axis[1], axis[0], 0]], dtype=np.float32)
+                I = np.eye(3, dtype=np.float32)
+                R = I + 2 * (K @ K)
+        else:
+            axis = axis / axis_norm
 
-        K = np.array([[0, -axis[2], axis[1]],
-                      [axis[2], 0, -axis[0]],
-                      [-axis[1], axis[0], 0]], dtype=np.float32)
+            cos_angle = np.dot(normal, target)
+            cos_angle = np.clip(cos_angle, -1.0, 1.0)
+            angle = np.arccos(cos_angle)
 
-        I = np.eye(3, dtype=np.float32)
-        R = I + np.sin(angle) * K + (1 - np.cos(angle)) * (K @ K)
+            K = np.array([[0, -axis[2], axis[1]],
+                          [axis[2], 0, -axis[0]],
+                          [-axis[1], axis[0], 0]], dtype=np.float32)
 
-        return transformed_points, R
+            I = np.eye(3, dtype=np.float32)
+            R = I + np.sin(angle) * K + (1 - np.cos(angle)) * (K @ K)
+
+        return np.ascontiguousarray(transformed_points, dtype=np.float32), np.ascontiguousarray(R, dtype=np.float32)
 
     def _calculate_parallelepiped(self, main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt):
         """Создание параллелепипеда, из которого будет вырезан объект"""
