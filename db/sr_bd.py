@@ -8,6 +8,14 @@ CREATE TABLE IF NOT EXISTS files (
     file TEXT
 )
 ''')
+
+
 def plus_file(id, file):
     cursor.execute('''
     INSERT INTO 'files' id=?, file=?''', (id, file))
+
+
+def select_file(id):
+    return cursor.execute('''
+    SELECT file FROM files WHERE id=?''', (id,)).fetchall()[1]
+
