@@ -1,10 +1,10 @@
-import base64
 from logging import getLogger
 
-from analysis.strategy.main_strategy import MainAnalysisStrategy
+from analysis.facade_analysis import FacadeAnalysis
 from logger_config import setup_logging
 import cv2
-import numpy as np
+
+from scene3d.run3d import Run3D
 
 
 class RunTime:
@@ -16,17 +16,24 @@ class RunTime:
         setup_logging()
         self.logger = getLogger(type(self).__name__)
 
-        self.analise_strategy = MainAnalysisStrategy()
+        self.facade = FacadeAnalysis()
         self.cap = cv2.VideoCapture(0)
 
 
     def __call__(self):
+        has_viz = hasattr(cv2, 'viz')
+        # has_viz = False
+        if has_viz:
+            run3d = Run3D(self.facade._main_strategy._state)  # нарушать инкапсуляцию можно, если это упрощает тестирование
+            run3d.setup()
         while True:
+            if has_viz:
+                run3d.show()
             ret, frame = self.cap.read()
             if not ret:
                 self.logger.error('Failed to capture frame')
 
-            result_frame = self.analise_strategy(frame)
+            result_frame = self.facade.analyze_frame(frame)
 
             cv2.imshow('Original', result_frame)
 

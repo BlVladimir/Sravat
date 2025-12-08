@@ -1,34 +1,46 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Optional
+from typing import Optional, List, Tuple
 import numpy as np
 
 
 class Method(Enum):
-    START = auto()  # вход в обработку
-    END = auto()  # выход из обработки
+    EXIT = auto()  # выход из обработки
     ERROR = auto()  # ошибка в процессе выполнения
 
     DETECT_RECT_MARKERS = auto()
-    DETECT_LIGHT_MARKER = auto()
     CREATE_HOMOGRAPHY_TRANSFORM = auto()
     DRAW_PLANE = auto()
 
-    SELECT_METHOD = auto()
-    CANNY = auto()
-    ADAPTIVE = auto()
+    FIND_CONTOUR = auto()
+    PROCESS_CONTOUR = auto()
+
+    HANDLE_SCANNING_DATA = auto()
+    CREATE_MODEL = auto()
+
+    DETECT_LIGHT_MARKER = auto()
+
 
 @dataclass
 class State:
     """Хранит переменные, которые используют функции обнаружения"""
-    method:Method = Method.START
+    method:Method = Method.DETECT_RECT_MARKERS
 
-    detector_light_markers = None
-    aruco_light_dict = None
-    aruco_light_params = None
-
-    centers = []
-    src_points = []
+    centers: List[np.ndarray] = field(default_factory=list)
+    src_points: List = field(default_factory=list)
 
     current_frame:Optional[np.ndarray] = None
+    contour: Optional[np.ndarray] = None
+    marker_data: Optional[dict] = None
 
+    plane_equation: Optional[Tuple[np.ndarray, float]] = None
+    current_contour_3d: List[List[np.ndarray]] = field(default_factory=list)
+
+    scanning_data: List[Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = field(default_factory=list)
+    bottom_point = None
+
+    dvecs:Optional[Tuple[np.ndarray, np.ndarray]] = None
+    start_vecs = None
+
+    object3d:Optional[np.ndarray] = None
+    cube_side:np.float32 = 0.0
