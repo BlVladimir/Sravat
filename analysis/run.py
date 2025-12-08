@@ -1,10 +1,8 @@
 from logging import getLogger
 
 from analysis.facade_analysis import FacadeAnalysis
-from analysis.strategy.main_strategy import MainAnalysisStrategy
 from logger_config import setup_logging
 import cv2
-import numpy as np
 
 from scene3d.run3d import Run3D
 

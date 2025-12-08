@@ -4,21 +4,26 @@ from typing import Tuple, Any
 from analysis.analysis_state import State
 from analysis.functions.function import Function, handle_exceptions
 import numpy as np
-import scanning_optimized
+from scanning_optimized import scanning_optimized
 
 
 class HandleScanningData(Function):
     def __init__(self, state:State, edge:int) -> None:
         super().__init__(state)
         self._EDGE = edge
+        self._THRESHOLD = 3
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):
+        """Из контуров создает массив из центров кубов, которые вместе образуют объект"""
         contours = list(map(self._transform_to_local_coordinates, self._state.contour))
         main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt, _ = self._state.scanning_data[0]
         parallelepiped = self._calculate_parallelepiped(main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt)
-        object3d = scanning_optimized.process_contours_optimized(parallelepiped, contours)
-        self._state.object3d = object3d
+        points = scanning_optimized.process_contours_optimized(parallelepiped, contours)
+
+        mask = points <= self._THRESHOLD
+
+        self._state.object3d = parallelepiped[mask]
         self._state.scanning_data = []
 
     @staticmethod
@@ -90,11 +95,12 @@ class HandleScanningData(Function):
         y0 = -(norm2_r/norm1)*sin_alpha_r
 
         step = max(1, b)/self._EDGE
+        self._state.cube_side = step
 
-        parallelepiped = np.array([[(x+0.5)*step, (y+0.5)*step, (z+0.5)*step]
-                                    for x in range(0, self._special_round(1/step))
-                                    for y in range(self._special_round(y0 / step, 'floor'), self._special_round((y0 + b) / step))
-                                    for z in range(0, self._special_round(h / step))])
+        parallelepiped = np.array([[(x + 0.5) * step, (y + 0.5) * step, (z + 0.5) * step]
+                                   for x in range(0, self._special_round(1 / step))
+                                   for y in range(self._special_round(y0 / step, 'floor'), self._special_round((y0 + b) / step))
+                                   for z in range(0, self._special_round(h / step))], dtype=np.float32)
 
         return parallelepiped
 

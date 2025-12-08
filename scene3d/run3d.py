@@ -101,33 +101,34 @@ class Run3D:
 
         colors = [cv2.viz.Color.cyan(), cv2.viz.Color.magenta()]
 
-        for i, (marker_id, dvec) in enumerate(zip(self.state.start_vecs, self.state.dvecs)):
-            start_point = self.state.marker_data[marker_id]['tvec']
+        if self.state.dvecs and self.state.start_vecs:
+            for i, (marker_id, dvec) in enumerate(zip(self.state.start_vecs, self.state.dvecs)):
+                start_point = self.state.marker_data[marker_id]['tvec']
 
-            start_point_np = np.array(start_point, dtype=np.float32)
-            dvec_np = np.array(dvec, dtype=np.float32)
+                start_point_np = np.array(start_point, dtype=np.float32)
+                dvec_np = np.array(dvec, dtype=np.float32)
 
-            end_point = start_point_np + dvec_np
+                end_point = start_point_np + dvec_np
 
-            line_widget = cv2.viz.WLine(start_point_np, end_point, color=colors[i])
-            line_name = f"diag_vec_{i}_line"
-            self.win.showWidget(line_name, line_widget)
-            self.contour_widgets.add(line_name)
+                line_widget = cv2.viz.WLine(start_point_np, end_point, color=colors[i])
+                line_name = f"diag_vec_{i}_line"
+                self.win.showWidget(line_name, line_widget)
+                self.contour_widgets.add(line_name)
 
-            start_sphere = cv2.viz.WSphere(
-                start_point_np,
-                radius=0.008,
-                color=cv2.viz.Color.green()
-            )
-            start_name = f"diag_vec_{i}_start"
-            self.win.showWidget(start_name, start_sphere)
-            self.contour_widgets.add(start_name)
+                start_sphere = cv2.viz.WSphere(
+                    start_point_np,
+                    radius=0.008,
+                    color=cv2.viz.Color.green()
+                )
+                start_name = f"diag_vec_{i}_start"
+                self.win.showWidget(start_name, start_sphere)
+                self.contour_widgets.add(start_name)
 
-            end_sphere = cv2.viz.WSphere(
-                end_point,
-                radius=0.008,
-                color=colors[i]
-            )
-            end_name = f"diag_vec_{i}_end"
-            self.win.showWidget(end_name, end_sphere)
-            self.contour_widgets.add(end_name)
+                end_sphere = cv2.viz.WSphere(
+                    end_point,
+                    radius=0.008,
+                    color=colors[i]
+                )
+                end_name = f"diag_vec_{i}_end"
+                self.win.showWidget(end_name, end_sphere)
+                self.contour_widgets.add(end_name)

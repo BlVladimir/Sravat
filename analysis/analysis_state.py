@@ -15,6 +15,9 @@ class Method(Enum):
     FIND_CONTOUR = auto()
     PROCESS_CONTOUR = auto()
 
+    HANDLE_SCANNING_DATA = auto()
+    CREATE_MODEL = auto()
+
     DETECT_LIGHT_MARKER = auto()
 
 
@@ -40,3 +43,4 @@ class State:
     start_vecs = None
 
     object3d:Optional[np.ndarray] = None
+    cube_side:np.float32 = 0.0

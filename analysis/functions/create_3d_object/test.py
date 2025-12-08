@@ -39,36 +39,37 @@ class Test(ut.TestCase):
 
     def test1_process_contour(self):
         expected = list(repeat(0, 125))
-        parallelepiped = [[x, y, z]
+        parallelepiped = np.array([[x, y, z]
                           for x in range(0, 5)
                           for y in range(-2, 3)
-                          for z in range(0, 5)]
-        contours = [([[5, -10, -10],
-                      [5, 10, -10],
-                      [5, 10, 10],
-                      [5, -10, 10]],
-                     [[0, 0, 1],
-                      [0, 1, 0],
-                      [-1, 0, 0]])]
+                          for z in range(0, 5)], dtype=np.float32)
+        contours = [(np.array([[5, -10, -10],
+                               [5, 10, -10],
+                               [5, 10, 10],
+                               [5, -10, 10]], dtype=np.float32),
+                     np.array([[0, 0, 1],
+                               [0, 1, 0],
+                               [-1, 0, 0]], dtype=np.float32))]
+
         actual = scanning_optimized.process_contours_optimized(parallelepiped, contours)
-        self.assertEqual(actual, expected)
+        np.testing.assert_array_almost_equal(actual, expected)
 
     def test2_process_contour(self):
-        expected = [1, 1, 1, 0, 1, 1, 1, 0]
-        parallelepiped = [[x, y, z]
+        expected = np.array([1, 1, 1, 0, 1, 1, 1, 0])
+        parallelepiped = np.array([[x, y, z]
                           for x in range(0, 2)
                           for y in range(0, 2)
-                          for z in range(0, 2)]
-        contours = [([[1, 0.5, 1.5],
-                      [1, 1.5, 1.5],
-                      [1, 1.5, 0.5],
-                      [1, 0.5, 0.5]],
-                     [[0, 0, 1],
-                      [0, 1, 0],
-                      [-1, 0, 0]])]
-        actual = scanning_optimized.process_contours_optimized(parallelepiped, contours)
-        self.assertEqual(actual, expected)
+                          for z in range(0, 2)], dtype=np.float32)
+        contours = [(np.array([[1, 0.5, 1.5],
+                               [1, 1.5, 1.5],
+                               [1, 1.5, 0.5],
+                               [1, 0.5, 0.5]], dtype=np.float32),
+                     np.array([[0, 0, 1],
+                               [0, 1, 0],
+                               [-1, 0, 0]], dtype=np.float32))]
 
+        actual = scanning_optimized.process_contours_optimized(parallelepiped, contours)
+        np.testing.assert_array_almost_equal(actual, expected)
 
 if __name__ == '__main__':
     ut.main()

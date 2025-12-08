@@ -6,7 +6,9 @@ edition = "2021"
 [lib]
 name = "scanning_optimized"
 crate-type = ["cdylib"]
+path = "src/lib.rs"
 
 [dependencies]
-pyo3 = { version = "0.19", features = ["extension-module"] }
-rayon = "1.7"
+pyo3 = { version = "0.22", features = ["extension-module"] }
+rayon = "1.10"
+numpy = "0.22"

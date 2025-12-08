@@ -24,7 +24,7 @@ class MainAnalysisStrategy:
         if self._state.method == Method.ERROR:
             return frame
 
-        self._markers_handler()
+        self._contour_handler()
         if self._state.method == Method.ERROR:
             return frame
 

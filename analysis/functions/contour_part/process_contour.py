@@ -30,7 +30,6 @@ class ProcessContour(Function):
         points = contour.reshape(-1, 2)
         max_y_idx = np.argmax(points[:, 1])
 
-        # Возвращаем координаты нижней точки
         bottom_point = points[max_y_idx]
 
         bottom_point_3d = self.project_bottom_point_to_3d(bottom_point)
@@ -39,7 +38,6 @@ class ProcessContour(Function):
         self._state.bottom_point = bottom_point_3d
 
         if bottom_point_3d is not None and Config.camera_matrix is not None:
-            # Определяем плоскость перпендикулярную камере через нижнюю точку
             plane_normal = np.array([0.0, 0.0, -1.0])
             plane_d = -np.dot(plane_normal, bottom_point_3d)
             plane_equation = (plane_normal, plane_d)
@@ -67,7 +65,7 @@ class ProcessContour(Function):
         br = np.array(br, dtype=np.float32)
         bl = np.array(bl, dtype=np.float32)
 
-        u, v = 0.5, 0.5  # начальное приближение
+        u, v = 0.5, 0.5
         for _ in range(10):
             top_interp = (1 - u) * tl + u * tr
 
@@ -75,14 +73,11 @@ class ProcessContour(Function):
 
             point_estimate = (1 - v) * top_interp + v * bottom_interp
 
-            # Вычисляем градиенты для уточнения u, v
             du_vec = (1 - v) * (tr - tl) + v * (br - bl)
             dv_vec = bottom_interp - top_interp
 
-            # Разница между целевой и текущей точкой
             diff = bottom_point - point_estimate
 
-            # Решаем линейную систему для delta_u, delta_v
             jacobian = np.column_stack([du_vec, dv_vec])
             try:
                 delta = np.linalg.lstsq(jacobian, diff, rcond=None)[0]
@@ -120,17 +115,14 @@ class ProcessContour(Function):
     def project_2d_to_3d(point_2d, camera_matrix, plane_equation):
         """Проецирует 2D точку изображения в 3D на заданной плоскости"""
         n, d = plane_equation
-        # Обратная проекция: из 2D в луч в 3D
         inv_K = np.linalg.inv(camera_matrix)
         point_2d_hom = np.array([point_2d[0], point_2d[1], 1.0])
         ray_dir = inv_K.dot(point_2d_hom)
-        ray_dir = ray_dir / np.linalg.norm(ray_dir)  # нормализуем
+        ray_dir = ray_dir / np.linalg.norm(ray_dir)
 
-        # Находим пересечение луча с плоскостью: t = - (n·O + d) / (n·ray_dir)
-        # Точка O (начало луча) - это центр камеры (0,0,0) в системе координат камеры
         denominator = np.dot(n, ray_dir)
         if abs(denominator) < 1e-6:
-            return None  # луч параллелен плоскости
+            return None
 
         t = -d / denominator
         point_3d = t * ray_dir
