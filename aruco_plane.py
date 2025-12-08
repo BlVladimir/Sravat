@@ -12,7 +12,7 @@ class ArUcoPlaneDetector:
         self.colors = {
             'contour': (255, 0, 0),      # Синий контур
             'fill': (0, 255, 255),       # Желтая заливка
-            'center': (0, 255, 0),       # Зеленый центр
+            'center': (0, 255, 0),       # Зеленый центр 
             'corners': [(0, 0, 255), (0, 255, 0), (255, 0, 0), (255, 255, 0)]  # Угловые точки
         }
     
@@ -142,13 +142,13 @@ class ArUcoPlaneDetector:
             # Рисуем плоскость
             output_frame = self.draw_plane(output_frame, centers, src_points)
         
-        return output_frame, warped_image, homography_matrix, centers, src_points
+        return output_frame, src_points
 
 
 class ContourDetector:
-    def __init__(self):
-        self.area_threshold = 500
-    
+    def __init__(self, area_threshold=500):
+        self.area_threshold = area_threshold
+        
     def is_contour_inside_plane(self, contour, plane_points):
         """Проверяет, полностью ли контур находится внутри плоскости"""
         if plane_points is None or len(plane_points) != 4:
@@ -200,7 +200,7 @@ class ContourDetector:
 def main():
     """Основная функция для демонстрации работы классов"""
     detector = ArUcoPlaneDetector()
-    contour_detector = ContourDetector()
+    contour_detector = ContourDetector(area_threshold=500)
     
     cap = cv2.VideoCapture(0)
     
@@ -216,7 +216,7 @@ def main():
             break
         
         # Обрабатываем кадр для детекции маркеров и плоскости
-        output_frame, warped_image, homography, centers, plane_points = detector.process_frame(frame)
+        output_frame, plane_points = detector.process_frame(frame)
         
         # Обрабатываем кадр для детекции контуров (передаем точки плоскости)
         result = contour_detector.process_frame(output_frame, plane_points)
