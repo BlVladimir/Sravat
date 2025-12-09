@@ -1,0 +1,12 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "scanning_optimized"
+version = "0.1.0"
+description = "Rust-accelerated 3D mesh processing"
+requires-python = ">=3.8"
+
+[project.optional-dependencies]
+dev = ["pytest", "numpy"]
