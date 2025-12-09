@@ -44,10 +44,8 @@ class CameraCalibrationStrategy:
         if ids is None or len(ids) == 0:
             return frame
 
-        # Берем первый обнаруженный маркер
         for marker_corner in corners:
             reordered_corners = np.array(list(reversed(marker_corner[0])), dtype=np.float32)
-            # Сохраняем данные
             obj_points = self.marker_3d_points.reshape(-1, 1, 3)
 
             self.all_obj_points.append(obj_points)

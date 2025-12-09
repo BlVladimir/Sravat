@@ -36,7 +36,6 @@ class Run3D:
         self.win.showWidget('bottom_point', sphere)
 
     def show(self):
-        # Если есть данные о расположении маркеров
         if self.state.marker_data is not None:
             for idx, data  in enumerate(islice(self.state.marker_data.values(), 4)):
                 tvec = data['tvec']

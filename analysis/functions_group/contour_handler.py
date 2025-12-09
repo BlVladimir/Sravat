@@ -20,12 +20,10 @@ class ContourHandler(FunctionsGroup):
 
         self._prev_dvec:Optional[np.ndarray] = None
         self._cur_dvec:Optional[np.ndarray] = None
-        self._sum_angle = 0
 
     def __call__(self, *args, **kwargs):
         """Обрабатывает текущий кадр и запускает анализ контура при необходимости."""
         self._cur_dvec = self._state.dvecs[0]
-        self._logger.debug(f'dvec: {self._cur_dvec}')
 
         if self._prev_dvec is None:
             self._prev_dvec = self._cur_dvec
@@ -41,7 +39,6 @@ class ContourHandler(FunctionsGroup):
 
         if angle > np.pi / Config.PHOTO_COUNTS:
             self._prev_dvec = self._cur_dvec
-            self._sum_angle += angle
             super().__call__(*args, **kwargs)
             return
 
@@ -49,7 +46,6 @@ class ContourHandler(FunctionsGroup):
 
     def reset(self):
         """Подготовка к переиспользованию класса"""
-        self._sum_angle = 0
         self._prev_dvec = None
         self._cur_dvec = None
 

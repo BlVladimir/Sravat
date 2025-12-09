@@ -1,12 +1,10 @@
 import logging
-from typing import Callable
 
 import numpy as np
 
 from analysis.analysis_config import Config
 from analysis.strategy.camera_calibration_strategy import CameraCalibrationStrategy
 from analysis.strategy.main_strategy import MainAnalysisStrategy
-from analysis.strategy.test_3d_strategy import Test3DStrategy
 
 
 class FacadeAnalysis:
@@ -65,7 +63,6 @@ class FacadeAnalysis:
         self._is_calibrated = Config.load_calibration()
 
         self._main_strategy = MainAnalysisStrategy()
-        # self._main_strategy = Test3DStrategy()
 
     def analyze_frame(self, frame:np.ndarray)->np.ndarray:
         if self._is_calibrated:

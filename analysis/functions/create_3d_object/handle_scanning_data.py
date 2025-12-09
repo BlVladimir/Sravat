@@ -11,14 +11,13 @@ class HandleScanningData(Function):
     def __init__(self, state:State, edge:int) -> None:
         super().__init__(state)
         self._EDGE = edge
-        self._THRESHOLD = 3
+        self._THRESHOLD = 14
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):
         """Из контуров создает массив из центров кубов, которые вместе образуют объект"""
         contours = list(map(self._transform_to_local_coordinates, self._state.scanning_data))
 
-        # Логирование структуры contours
         self._logger.info(f"contours length: {len(contours)}")
         if contours:
             self._logger.info(f"first contour type: {type(contours[0])}")

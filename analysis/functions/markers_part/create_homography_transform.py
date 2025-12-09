@@ -16,7 +16,6 @@ class CreateHomographyTransform(Function):
 
         normals = []
         for i in range(4):
-            # Выбираем три точки
             p1, p2, p3 = points_3d[i], points_3d[(i + 1) % 4], points_3d[(i + 2) % 4]
             v1 = p2 - p1
             v2 = p3 - p1
@@ -28,7 +27,6 @@ class CreateHomographyTransform(Function):
 
         centroid = np.mean(points_3d, axis=0)
 
-        # Расстояние до плоскости
         distance = -np.dot(average_normal, centroid)
 
         self._state.plane_equation = (average_normal, distance)
