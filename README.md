@@ -39,28 +39,6 @@ maturin develop --release
 pip install -r requirements.txt
 ```
 
-### Linux/macOS:
-```bash
-# 1. Создание виртуального окружения
-python -m venv venv
-
-# 2. Активация
-source venv/bin/activate
-
-# 3. Обновление pip и установка build tools
-python -m pip install --upgrade pip
-pip install wheel setuptools
-
-# 4. Установка Maturin
-pip install maturin
-
-# 5. Сборка и установка scanning_optimized
-maturin develop --release
-
-# 6. Установка остальных зависимостей
-pip install -r requirements.txt
-```
-
 ## Альтернативный вариант (без локальной сборки):
 
 Если `scanning_optimized` уже опубликован на PyPI или доступен через GitHub releases:
@@ -71,8 +49,6 @@ pip install -r requirements.txt
 ## Как использовать requirements.txt:
 1. `pip install -r requirements.txt` - загружает все модули из файла
 2. `pip freeze > requirements.txt` - дозапись еще не записанных модулей
-
-**После любого загруженного через pip модуля ЗАПИСЫВАЙТЕ ЕГО В ФАЙЛ!!!**
 
 ## Структура проекта:
 ```

@@ -11,21 +11,21 @@ class FindContour(Function):
     """Обрабатывает кадр и рисует контуры только внутри плоскости"""
     def __init__(self, state):
         super().__init__(state)
-        self.area_threshold = 500
 
     @staticmethod
-    def is_contour_inside_plane(plane_points, contour):
+    def is_contour_inside_plane(plane_points, contour, min_distance=5.0, min_area=1000.0):
         """Проверяет, полностью ли контур находится внутри плоскости"""
         plane_contour = np.array(plane_points, dtype=np.float32).reshape(-1, 1, 2)
-
         contour_points = contour.reshape(-1, 2)
 
-        border_threshold = 1.0
+        if cv2.contourArea(contour_points) < min_area:
+            return False
 
         for point in contour_points:
-            result = cv2.pointPolygonTest(plane_contour, tuple(point.astype(float)), False)
-            if result < border_threshold:
+            result = cv2.pointPolygonTest(plane_contour, tuple(point.astype(float)), True)
+            if result < min_distance:
                 return False
+
         return True
 
     @handle_exceptions
@@ -43,9 +43,13 @@ class FindContour(Function):
 
         src_points = self._state.src_points
 
-        filter_contours = filter(partial(self.is_contour_inside_plane, src_points), contours)
+        sorted_contours = sorted(filter(partial(self.is_contour_inside_plane, src_points), contours), key=cv2.contourArea, reverse=True)
 
-        if filter_contours:
-            self._state.contour = max(filter_contours, key=cv2.contourArea)
+        if sorted_contours:
+            contour = sorted_contours[0]
+            cv2.drawContours(frame, [contour], -1, (0, 255, 0), 2, cv2.LINE_AA)
+            self._logger.info(cv2.contourArea(contour))
+            self._state.current_frame = frame
+            self._state.contour = contour
         else:
             self._state.method = Method.ERROR

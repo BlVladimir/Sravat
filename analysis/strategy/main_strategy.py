@@ -1,3 +1,4 @@
+from analysis.analysis_config import Config
 from analysis.analysis_state import State, Method
 
 import numpy as np
@@ -30,13 +31,16 @@ class MainAnalysisStrategy:
         if self._state.method == Method.ERROR:
             return frame
 
+        # self._contour_handler()
+        # if self._state.method == Method.ERROR:
+        #     return frame
+
         if not self._is_processed:
             self._contour_handler()
             if self._state.method == Method.ERROR:
                 return frame
 
-            if self._contour_handler.sum_angle >= 2 * np.pi:
-                self._logger.info(f'Len data: {len(self._state.scanning_data)}')
+            if len(self._state.scanning_data) == Config.PHOTO_COUNTS:
                 self._process_data()
                 self._is_processed = True
 

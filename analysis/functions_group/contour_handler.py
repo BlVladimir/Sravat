@@ -34,7 +34,9 @@ class ContourHandler(FunctionsGroup):
         norm1 = float(np.linalg.norm(self._cur_dvec))
         norm2 = float(np.linalg.norm(self._prev_dvec))
 
-        angle = np.arccos((self._cur_dvec @ self._prev_dvec) / (norm1 * norm2))
+        cos = np.clip((self._cur_dvec @ self._prev_dvec) / (norm1 * norm2), -1, 1)
+
+        angle = np.arccos(cos)
 
         if angle > np.pi / Config.PHOTO_COUNTS:
             self._prev_dvec = self._cur_dvec

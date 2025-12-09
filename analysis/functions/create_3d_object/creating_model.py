@@ -14,7 +14,7 @@ class CreatingModel(Function):
     @handle_exceptions
     def __call__(self, *args, **kwargs):
         centers, cube_side = self._state.object3d, self._state.cube_side
-        if hasattr(cv2, 'viz'):
+        if hasattr(cv2, 'viz') or True:
             vertices, indices, normals = scanning_optimized.build_voxel_mesh_with_normals(centers, cube_side)
             self._write_obj_simple(vertices, indices, normals)
         else:
