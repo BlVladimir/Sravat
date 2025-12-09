@@ -20,6 +20,8 @@ class DetectRectMarkers(Function):
 
         self._ids_diag = []
 
+        self._smoothed_tvecs = {}
+        self._smoothing_alpha = 0.3
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):
@@ -40,7 +42,6 @@ class DetectRectMarkers(Function):
         marker_data = {}  # {id: {'center': (x, y), 'corners': [(x1,y1), ...], 'rvec': rvec, 'tvec': tvec}}
 
         for i, (corner, marker_id) in enumerate(zip(corners, ids.flatten())):
-            # Центр маркера
             center = np.mean(corner[0], axis=0)
             centers.append(center)
 
@@ -48,10 +49,13 @@ class DetectRectMarkers(Function):
             reordered_corners = list(reversed(marker_corners))
             tvec, rvec = self._estimate_marker_3d_pose(reordered_corners)
 
-            marker_data[int(marker_id)] = {
+            marker_id_int = int(marker_id)
+            smoothed_tvec = self._apply_smoothing(marker_id_int, tvec.squeeze())
+
+            marker_data[marker_id_int] = {
                 'main_corner': None,
                 'corners': [tuple(map(float, c)) for c in reordered_corners],
-                'tvec': tvec.squeeze(),
+                'tvec': smoothed_tvec,
                 'rvec': rvec
             }
 
@@ -63,9 +67,20 @@ class DetectRectMarkers(Function):
         self._state.dvecs = self._calculate_diagonal_vector()
         self._state.start_vecs = (self._ids_diag[0], self._ids_diag[1])
 
+    def _apply_smoothing(self, marker_id: int, new_tvec: np.ndarray) -> np.ndarray:
+        """Применяет экспоненциальное сглаживание к вектору перемещения"""
+        if marker_id not in self._smoothed_tvecs:
+            self._smoothed_tvecs[marker_id] = new_tvec.copy()
+            return new_tvec
+
+        old_tvec = self._smoothed_tvecs[marker_id]
+        smoothed = self._smoothing_alpha * new_tvec + (1 - self._smoothing_alpha) * old_tvec
+
+        self._smoothed_tvecs[marker_id] = smoothed
+        return smoothed
+
     def _estimate_marker_3d_pose(self, marker_corners_2d):
         """Оценивает 3D позицию и ориентацию маркера"""
-
         size = Config.MARKER_SIZE
         object_points = np.array([
             [-size / 2, -size / 2, 0],
@@ -80,26 +95,24 @@ class DetectRectMarkers(Function):
             object_points,
             marker_corners_2d,
             Config.camera_matrix,
-            Config.dist_coeffs
+            Config.dist_coeffs,
+            flags=cv2.SOLVEPNP_IPPE_SQUARE
         )
 
         if success:
             return tvec, rvec
         else:
-            self._logger.warning("Can't estimate marker pose")
-            return np.zeros(3, dtype=np.float32), np.zeros(3, dtype=np.float32)
+            self.__exit()
 
     def __exit(self):
         self._state.src_points = []
         self._state.method = Method.ERROR
-
 
     @staticmethod
     def _sort_points(points, corners, ids, data):
         """Сортирует точки в порядке: top-left, top-right, bottom-right, bottom-left
         Для каждого маркера сохраняет противоположный угол"""
         points = np.array(points)
-
         y_sorted_indices = np.argsort(points[:, 1])
         y_sorted = points[y_sorted_indices]
 
@@ -141,6 +154,7 @@ class DetectRectMarkers(Function):
 
         return result_points
 
+
     def _calculate_diagonal_vector(self):
         """Вычисляет 3D вектор диагонали прямоугольника маркеров"""
         tl_2d, tr_2d, br_2d, bl_2d = self._state.src_points
@@ -176,5 +190,7 @@ class DetectRectMarkers(Function):
 
         return br_3d - tl_3d, bl_3d - tr_3d
 
+
     def reset(self):
         self._ids_diag = []
+        self._smoothed_tvecs = {}

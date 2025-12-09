@@ -25,6 +25,7 @@ class ContourHandler(FunctionsGroup):
     def __call__(self, *args, **kwargs):
         """Обрабатывает текущий кадр и запускает анализ контура при необходимости."""
         self._cur_dvec = self._state.dvecs[0]
+        self._logger.debug(f'dvec: {self._cur_dvec}')
 
         if self._prev_dvec is None:
             self._prev_dvec = self._cur_dvec
@@ -54,10 +55,6 @@ class ContourHandler(FunctionsGroup):
 
         for _, (_, method) in self._transition.items():
             method.reset()
-
-    @property
-    def sum_angle(self):
-        return self._sum_angle
 
     def __bool__(self):
         return False
