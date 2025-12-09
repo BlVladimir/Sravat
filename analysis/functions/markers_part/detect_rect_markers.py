@@ -49,7 +49,7 @@ class DetectRectMarkers(Function):
             tvec, rvec = self._estimate_marker_3d_pose(reordered_corners)
 
             marker_data[int(marker_id)] = {
-                'center': center,
+                'main_corner': None,
                 'corners': [tuple(map(float, c)) for c in reordered_corners],
                 'tvec': tvec.squeeze(),
                 'rvec': rvec
@@ -58,7 +58,7 @@ class DetectRectMarkers(Function):
             cv2.circle(frame, tuple(center.astype(int)), 3, Config.COLORS['center'], -1)
 
         self._state.current_frame = frame
-        self._state.src_points = np.float32(self._sort_points(centers))
+        self._state.src_points = np.float32(self._sort_points(centers, corners, ids, marker_data))
         self._state.marker_data = marker_data
         self._state.dvecs = self._calculate_diagonal_vector()
         self._state.start_vecs = (self._ids_diag[0], self._ids_diag[1])
@@ -76,7 +76,6 @@ class DetectRectMarkers(Function):
 
         marker_corners_2d = np.array(marker_corners_2d, dtype=np.float32)
 
-        # Решаем задачу PnP
         success, rvec, tvec = cv2.solvePnP(
             object_points,
             marker_corners_2d,
@@ -94,23 +93,53 @@ class DetectRectMarkers(Function):
         self._state.src_points = []
         self._state.method = Method.ERROR
 
+
     @staticmethod
-    def _sort_points(points):
-        """Сортирует точки в порядке: top-left, top-right, bottom-right, bottom-left"""
+    def _sort_points(points, corners, ids, data):
+        """Сортирует точки в порядке: top-left, top-right, bottom-right, bottom-left
+        Для каждого маркера сохраняет противоположный угол"""
         points = np.array(points)
 
-        y_sorted = points[np.argsort(points[:, 1])]
+        y_sorted_indices = np.argsort(points[:, 1])
+        y_sorted = points[y_sorted_indices]
+
+        top_points_indices = y_sorted_indices[:2]
+        bottom_points_indices = y_sorted_indices[2:]
 
         top_points = y_sorted[:2]
         bottom_points = y_sorted[2:]
 
-        top_sorted = top_points[np.argsort(top_points[:, 0])]
-        tl, tr = top_sorted[0], top_sorted[1]
+        top_sorted_order = np.argsort(top_points[:, 0])
+        top_sorted_indices = top_points_indices[top_sorted_order]
+        tl_idx, tr_idx = top_sorted_indices[0], top_sorted_indices[1]
 
-        bottom_sorted = bottom_points[np.argsort(bottom_points[:, 0])]
-        bl, br = bottom_sorted[0], bottom_sorted[1]
+        bottom_sorted_order = np.argsort(bottom_points[:, 0])
+        bottom_sorted_indices = bottom_points_indices[bottom_sorted_order]
+        bl_idx, br_idx = bottom_sorted_indices[0], bottom_sorted_indices[1]
 
-        return [tl, tr, br, bl]
+        result_points = []
+
+        for idx in [tl_idx, tr_idx, br_idx, bl_idx]:
+            marker_corners = corners[idx][0]
+            marker_id = int(ids[idx])
+
+            corner_sums = marker_corners[:, 0] + marker_corners[:, 1]
+
+            if idx == tl_idx:
+                corner_point = marker_corners[np.argmax(corner_sums)]
+            elif idx == tr_idx:
+                corner_diffs = marker_corners[:, 0] - marker_corners[:, 1]
+                corner_point = marker_corners[np.argmin(corner_diffs)]
+            elif idx == br_idx:
+                corner_point = marker_corners[np.argmin(corner_sums)]
+            else:
+                corner_diffs = marker_corners[:, 0] - marker_corners[:, 1]
+                corner_point = marker_corners[np.argmax(corner_diffs)]
+
+            data[marker_id]['main_corner'] = corner_point
+            result_points.append(corner_point)
+
+        return result_points
 
     def _calculate_diagonal_vector(self):
         """Вычисляет 3D вектор диагонали прямоугольника маркеров"""
@@ -118,21 +147,27 @@ class DetectRectMarkers(Function):
         marker_data = self._state.marker_data
 
         if not self._ids_diag:
-            self._ids_diag = list(repeat(np.array([0, 0]), 4))
+            self._ids_diag = list(repeat(None, 4))
             for marker_id, data in marker_data.items():
-                marker_center = data['center']
+                marker_corners = data['corners']
 
-                if np.allclose(marker_center, tl_2d, atol=1e-6):
-                    self._ids_diag[0] = marker_id
+                for corner in marker_corners:
+                    corner = np.array(corner)
+                    if np.allclose(corner, tl_2d, atol=1e-6):
+                        self._ids_diag[0] = marker_id
+                        continue
 
-                if np.allclose(marker_center, tr_2d, atol=1e-6):
-                    self._ids_diag[1] = marker_id
+                    if np.allclose(corner, tr_2d, atol=1e-6):
+                        self._ids_diag[1] = marker_id
+                        continue
 
-                if np.allclose(marker_center, br_2d, atol=1e-6):
-                    self._ids_diag[2] = marker_id
+                    if np.allclose(corner, br_2d, atol=1e-6):
+                        self._ids_diag[2] = marker_id
+                        continue
 
-                if np.allclose(marker_center, bl_2d, atol=1e-6):
-                    self._ids_diag[3] = marker_id
+                    if np.allclose(corner, bl_2d, atol=1e-6):
+                        self._ids_diag[3] = marker_id
+                        continue
 
         tl_3d = marker_data[self._ids_diag[0]]['tvec']
         tr_3d = marker_data[self._ids_diag[1]]['tvec']

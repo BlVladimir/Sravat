@@ -18,34 +18,50 @@ class HandleScanningData(Function):
         """Из контуров создает массив из центров кубов, которые вместе образуют объект"""
         contours = list(map(self._transform_to_local_coordinates, self._state.scanning_data))
 
+        # Логирование структуры contours
+        self._logger.info(f"contours length: {len(contours)}")
+        if contours:
+            self._logger.info(f"first contour type: {type(contours[0])}")
+            if isinstance(contours[0], tuple) and len(contours[0]) == 2:
+                self._logger.info(
+                    f"first element type: {type(contours[0][0])}, shape: {contours[0][0].shape if hasattr(contours[0][0], 'shape') else 'no shape'}")
+                self._logger.info(
+                    f"second element type: {type(contours[0][1])}, shape: {contours[0][1].shape if hasattr(contours[0][1], 'shape') else 'no shape'}")
+
         main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt, _ = self._state.scanning_data[0]
+
+        self._logger.info(f"main_vec type: {type(main_vec)}, value: {main_vec}")
+        self._logger.info(f"auxiliary_vec type: {type(auxiliary_vec)}, value: {auxiliary_vec}")
+        self._logger.info(f"origin_main_pnt type: {type(origin_main_pnt)}, value: {origin_main_pnt}")
+        self._logger.info(f"origin_auxiliary_pnt type: {type(origin_auxiliary_pnt)}, value: {origin_auxiliary_pnt}")
+
         parallelepiped = self._calculate_parallelepiped(main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt)
+
+        self._logger.info(f"parallelepiped type: {type(parallelepiped)}, shape: {parallelepiped.shape}")
+
+        # Проверяем, что все элементы contours - это кортежи numpy массивов
+        for i, contour in enumerate(contours):
+            if not isinstance(contour, tuple) or len(contour) != 2:
+                self._logger.error(f"contour {i} is not a tuple of length 2: {type(contour)}")
+            elif not isinstance(contour[0], np.ndarray) or not isinstance(contour[1], np.ndarray):
+                self._logger.error(f"contour {i} elements are not numpy arrays: {type(contour[0])}, {type(contour[1])}")
+
         points = scanning_optimized.process_contours_optimized(parallelepiped, contours)
 
-        self._logger.debug(f'Number of contours: {len(contours)}')
-        self._logger.debug(f'Parallelepiped shape: {parallelepiped.shape}')
-        self._logger.debug(f'Parallelepiped range: X[{parallelepiped[:, 0].min():.3f}, {parallelepiped[:, 0].max():.3f}], '
-                          f'Y[{parallelepiped[:, 1].min():.3f}, {parallelepiped[:, 1].max():.3f}], '
-                          f'Z[{parallelepiped[:, 2].min():.3f}, {parallelepiped[:, 2].max():.3f}]')
-
-        first_contour_points, first_rotation = contours[0]
-        self._logger.debug(f'First contour points shape: {first_contour_points.shape}')
-        self._logger.debug(f'First contour range BEFORE rotation: '
-                           f'X[{first_contour_points[:, 0].min():.3f}, {first_contour_points[:, 0].max():.3f}], '
-                           f'Y[{first_contour_points[:, 1].min():.3f}, {first_contour_points[:, 1].max():.3f}], '
-                           f'Z[{first_contour_points[:, 2].min():.3f}, {first_contour_points[:, 2].max():.3f}]')
-
-        rotated = first_contour_points @ first_rotation.T
-        self._logger.debug(f'First contour range AFTER rotation: '
-                           f'X[{rotated[:, 0].min():.3f}, {rotated[:, 0].max():.3f}], '
-                           f'Y[{rotated[:, 1].min():.3f}, {rotated[:, 1].max():.3f}], '
-                           f'Z[{rotated[:, 2].min():.3f}, {rotated[:, 2].max():.3f}]')
+        self._logger.info(
+            f"points type: {type(points)}, shape: {points.shape if hasattr(points, 'shape') else 'no shape'}")
+        self._logger.info(f"points min: {np.min(points)}, max: {np.max(points)}, mean: {np.mean(points)}")
+        self._logger.info(f"THRESHOLD: {self._THRESHOLD}")
 
         mask = points <= self._THRESHOLD
-        self._logger.debug(f'Mask: {mask}')
-        self._logger.debug(f'Points: {points}')
+
+        self._logger.info(f"mask type: {type(mask)}, shape: {mask.shape if hasattr(mask, 'shape') else 'no shape'}")
+        self._logger.info(f"mask True count: {np.sum(mask)}, False count: {np.sum(~mask)}")
 
         self._state.object3d = parallelepiped[mask]
+
+        self._logger.info(f"object3d shape: {self._state.object3d.shape}")
+
         self._state.scanning_data = []
 
     @staticmethod
@@ -56,6 +72,9 @@ class HandleScanningData(Function):
         aux_vec = np.array(auxiliary_vector, dtype=np.float32)
         origin = np.array(origin_point, dtype=np.float32)
         points = np.array(points_array, dtype=np.float32)
+
+        if points.ndim == 1:
+            points = points.reshape(1, -1)
 
         scale = np.linalg.norm(main_vec)
 
@@ -116,7 +135,11 @@ class HandleScanningData(Function):
             I = np.eye(3, dtype=np.float32)
             R = I + np.sin(angle) * K + (1 - np.cos(angle)) * (K @ K)
 
-        return np.ascontiguousarray(transformed_points, dtype=np.float32), np.ascontiguousarray(R, dtype=np.float32)
+        result_points = np.ascontiguousarray(transformed_points, dtype=np.float32)
+        result_R = np.ascontiguousarray(R, dtype=np.float32)
+
+
+        return result_points, result_R
 
     def _calculate_parallelepiped(self, main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt):
         """Создание параллелепипеда, из которого будет вырезан объект"""

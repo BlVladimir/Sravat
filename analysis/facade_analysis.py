@@ -65,7 +65,7 @@ class FacadeAnalysis:
         self._is_calibrated = Config.load_calibration()
 
         self._main_strategy = MainAnalysisStrategy()
-        self._main_strategy = Test3DStrategy()
+        # self._main_strategy = Test3DStrategy()
 
     def analyze_frame(self, frame:np.ndarray)->np.ndarray:
         if self._is_calibrated:

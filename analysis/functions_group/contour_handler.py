@@ -56,3 +56,6 @@ class ContourHandler(FunctionsGroup):
     @property
     def sum_angle(self):
         return self._sum_angle
+
+    def __bool__(self):
+        return False

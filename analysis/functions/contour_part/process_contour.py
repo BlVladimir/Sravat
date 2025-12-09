@@ -14,18 +14,6 @@ class ProcessContour(Function):
     def __call__(self, *args, **kwargs):
         self._state.current_contour_3d.clear()
 
-        # if self._state.plane_equation is not None and Config.camera_matrix is not None:
-        #     contour_3d = []
-        #     for point in self._state.contour.reshape(-1, 2):
-        #         point_3d = self.project_2d_to_3d(
-        #             tuple(point),
-        #             Config.camera_matrix,
-        #             self._state.plane_equation
-        #         )
-        #         if point_3d is not None:
-        #             contour_3d.append(point_3d)
-        #     self._state.current_contour_3d.append(contour_3d)
-
         contour = self._state.contour
         points = contour.reshape(-1, 2)
         max_y_idx = np.argmax(points[:, 1])
@@ -33,16 +21,20 @@ class ProcessContour(Function):
         bottom_point = points[max_y_idx]
 
         bottom_point_3d = self.project_bottom_point_to_3d(bottom_point)
-        self._state.scanning_data.append((self._state.dvecs[0], self._state.dvecs[1], self._state.start_vecs[0], self._state.start_vecs[1], bottom_point_3d))
+
+        marker_id_0 = self._state.start_vecs[0]
+        marker_id_1 = self._state.start_vecs[1]
+        origin_main_pnt_3d = self._state.marker_data[marker_id_0]['tvec']
+        origin_auxiliary_pnt_3d = self._state.marker_data[marker_id_1]['tvec']
 
         self._state.bottom_point = bottom_point_3d
 
+        contour_3d_points = []
         if bottom_point_3d is not None and Config.camera_matrix is not None:
             plane_normal = np.array([0.0, 0.0, -1.0])
             plane_d = -np.dot(plane_normal, bottom_point_3d)
             plane_equation = (plane_normal, plane_d)
 
-            contour_3d = []
             for point in points:
                 point_3d = self.project_2d_to_3d(
                     tuple(point),
@@ -50,8 +42,20 @@ class ProcessContour(Function):
                     plane_equation
                 )
                 if point_3d is not None:
-                    contour_3d.append(point_3d)
-            self._state.current_contour_3d.append(contour_3d)
+                    contour_3d_points.append(point_3d)
+
+            self._state.current_contour_3d.append(contour_3d_points)
+
+        if contour_3d_points:
+            contour_3d_array = np.array(contour_3d_points, dtype=np.float32)
+
+            self._state.scanning_data.append((
+                self._state.dvecs[0],
+                self._state.dvecs[1],
+                origin_main_pnt_3d,
+                origin_auxiliary_pnt_3d,
+                contour_3d_array
+            ))
 
     def project_bottom_point_to_3d(self, bottom_point):
         """

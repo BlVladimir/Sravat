@@ -1,3 +1,6 @@
+from functools import partial
+
+from analysis.analysis_state import Method
 from analysis.functions.function import Function, handle_exceptions
 
 import numpy as np
@@ -11,22 +14,17 @@ class FindContour(Function):
         self.area_threshold = 500
 
     @staticmethod
-    def is_contour_inside_plane(contour, plane_points):
+    def is_contour_inside_plane(plane_points, contour):
         """Проверяет, полностью ли контур находится внутри плоскости"""
-        if plane_points is None or len(plane_points) != 4:
-            return False
-
-        # Преобразуем plane_points в правильный формат для OpenCV
         plane_contour = np.array(plane_points, dtype=np.float32).reshape(-1, 1, 2)
 
-        # Преобразуем контур в массив точек
         contour_points = contour.reshape(-1, 2)
 
-        # Проверяем каждую точку контура
+        border_threshold = 1.0
+
         for point in contour_points:
-            # Проверяем, находится ли точка внутри четырехугольника
             result = cv2.pointPolygonTest(plane_contour, tuple(point.astype(float)), False)
-            if result < 0:
+            if result < border_threshold:
                 return False
         return True
 
@@ -43,9 +41,11 @@ class FindContour(Function):
 
         contours, _ = cv2.findContours(thresh_clean, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        sorted_contours = sorted(contours, key=cv2.contourArea, reverse=True)
-        contour = sorted_contours[0]
-        cv2.drawContours(frame, [contour], -1, (0, 255, 0), 2, cv2.LINE_AA)
+        src_points = self._state.src_points
 
-        self._state.current_frame = frame
-        self._state.contour = contour
+        filter_contours = filter(partial(self.is_contour_inside_plane, src_points), contours)
+
+        if filter_contours:
+            self._state.contour = max(filter_contours, key=cv2.contourArea)
+        else:
+            self._state.method = Method.ERROR
