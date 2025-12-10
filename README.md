@@ -77,28 +77,54 @@ maturin develop --release
 pip install -r requirements.txt
 ```
 
+## Файлы проекта:
+- analysis - python код
+- rust_part - код библиотеки на rust
+- markers - картинки маркеров, которые использовались для тестировки
+- sandbox - тесты и файлы, не вошедшие в проект
+
+## analysis
+- analysis_config.py - загружает конфиги из файлов
+- analysis_state.py - хранит переменные, обновляющиеся каждый кадр, которые обрабатывают функции
+- facade_analysis.py - ограничивает взаимодействие с системой обработки и меняет текущие стратегии обработки
+- logger_config.py - настройка логирования
+- run.py - запускает фасад. Главный файл проекта
+- strategy
+  - стратегии, которые обрабатывают изображения
+  - camera_calibration_strategy.py - стратегия получения калибровки камеры. Реализация находится в ней же
+  - main_strategy.py - стратегия обработки изображения с целью получить контура. Управляет обработчиками (группами функций)
+- functions_group
+    - обработчик или группа функций. Управляет функциями, которые хранят конкретную реализацию обработки
+    - contour_handler.py - ищет и обрабатывает контур
+    - markers_handler.py - ищет и обрабатывает маркеры четырех угольника
+    - process_data.py - обрабатывает данные и делает из них 3d модель
+    - shadow_handler.py - создает тень
+- functions - конкретная реализация каждой из функций. С точки зрения python функция - это класс с call, и используются они, как функция, поэтому они называются функциями. У всех них есть собственный logger для понимания, откуда пришел лог и доступ к state
+
+## MainStrategy
+Каждый из обработчиков является машиной состояний. У них есть начальное состояние и переходы между ними, причем каждому состоянию соответствует функция(за исключением состояния EXIT, которое соответствует выходу из обработчика). Так же каждая функция обернута в декоратор handle_exceptions, который выводит в лог ошибку и меняет состояние на ERROR, которое так же приведет к выходу из обработчика. После каждого вызова обработчика MAinStrategy проверяет текущее состояние на равенство ERROR, и если оно случилось, то сразу возвращает кадр без изменений, не вызывая последующие обработчики. Если же все обработчики успешно вызвались, то просто вернет текущий кадр 
+
 ## Структура проекта:
 ```
 Sravat/
-├── analysis/           # Python код анализа
-├── scanning_optimized/ # Rust модуль (если есть локально)
-│   ├── src/
-│   │   └── lib.rs
-│   ├── Cargo.toml
-│   └── pyproject.toml
-├── venv/              # Виртуальное окружение (не коммитить!)
+├── analysis
+├── sandbox/   тестировочные файлы и не вошедшие в итоговую реализвцию
+├── scanning_optimized
+├── venv            
 ├── requirements.txt
 └── README.md
 ```
 
 ```mermaid
 classDiagram
+    direction TB
+    
     class State {
-    <<dataclass>>
-    +method: Method
-    +centers: list
-    +src_points: list
-    +current_frame: np.ndarray
+        <<dataclass>>
+        +method: Method
+        +centers: list
+        +src_points: list
+        +current_frame: np.ndarray
     }
     
     class Function {
@@ -106,15 +132,54 @@ classDiagram
         #logger
         #state: State
         +__call__()*
+        +reset()*
     }
     
+    class FunctionsGroup {
+        <<abstract>>
+        #logger
+        #state: State
+        #transition: Dict[Method, Tuple[Method, Function]]
+        #STARTED_METHOD: Method
+        +__call__()*
+        +reset()*
+    }
+    
+    %% Обработчики-наследники FunctionsGroup
+    class MarkersHandler {
+        +__call__()
+        +reset()
+    }
+    
+    class ContourHandler {
+        +__call__()
+        +reset()
+    }
+    
+    class ProcessData {
+        +__call__()
+        +reset()
+    }
+    
+    class ShadowHandler {
+        +__call__()
+        +reset()
+    }
+    
+    class AnalysisStrategyInterface {
+        <<interface>>
+        +analyze_frame(base64_input) str*
+    }
     
     class MainAnalysisStrategy {
         -logger
         -state: State
-        -_transition: dict
-        -to_cv2(base64_string) np.ndarray
-        -to_base64(image) str
+        -markers_handler: MarkersHandler
+        -contour_handler: ContourHandler
+        -process_data: ProcessData
+        -shadow_handler: ShadowHandler
+        +analyze_frame(base64_input) str
+        +reset()
     }
     
     class FacadeAnalysis {
@@ -122,16 +187,28 @@ classDiagram
         +analyze_frame(base64_input) str
     }
     
-    class AnalysisStrategyInterface {
-        <<interface>>
-        +__call__(base64_input) str*
-    }
+    %% Наследование
+    FunctionsGroup <|-- MarkersHandler : extends
+    FunctionsGroup <|-- ContourHandler : extends
+    FunctionsGroup <|-- ProcessData : extends
+    FunctionsGroup <|-- ShadowHandler : extends
     
-    AnalysisStrategyInterface <|.. MainAnalysisStrategy
+    AnalysisStrategyInterface <|.. MainAnalysisStrategy : implements
     
-    %% Композиция / Агрегация
-    MainAnalysisStrategy *-- State
+    %% Композиция и агрегация
+    MainAnalysisStrategy *-- State : composition
     
-    FacadeAnalysis o-- AnalysisStrategyInterface
-```
+    MainAnalysisStrategy o-- MarkersHandler : aggregation
+    MainAnalysisStrategy o-- ContourHandler : aggregation
+    MainAnalysisStrategy o-- ProcessData : aggregation
+    MainAnalysisStrategy o-- ShadowHandler : aggregation
+    
+    FacadeAnalysis o-- AnalysisStrategyInterface : aggregation
+    
+    %% Связи использования
+    FunctionsGroup --> State : uses
+    Function --> State : uses
+    
+    %% Дополнительно: если FunctionsGroup содержит Function
+    FunctionsGroup *-- Function : composition
 ```

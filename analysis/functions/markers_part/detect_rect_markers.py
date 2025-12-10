@@ -175,55 +175,34 @@ class DetectRectMarkers(Function):
         marker_data = self._state.marker_data
 
         if not self._ids_diag:
-            self._logger.info("=== Initializing diagonal IDs (first time) ===")
             self._ids_diag = list(repeat(None, 4))
             for marker_id, data in marker_data.items():
                 marker_corners = data['corners']
-                self._logger.debug(f"Checking marker {marker_id}")
 
                 for corner_idx, corner in enumerate(marker_corners):
                     corner = np.array(corner)
                     if np.allclose(corner, tl_2d, atol=1e-6):
-                        self._logger.info(f"  TL matched: marker_id={marker_id}, corner_idx={corner_idx}, 2D={corner}")
                         self._ids_diag[0] = marker_id
                         continue
 
                     if np.allclose(corner, tr_2d, atol=1e-6):
-                        self._logger.info(f"  TR matched: marker_id={marker_id}, corner_idx={corner_idx}, 2D={corner}")
                         self._ids_diag[1] = marker_id
                         continue
 
                     if np.allclose(corner, br_2d, atol=1e-6):
-                        self._logger.info(f"  BR matched: marker_id={marker_id}, corner_idx={corner_idx}, 2D={corner}")
                         self._ids_diag[2] = marker_id
                         continue
 
                     if np.allclose(corner, bl_2d, atol=1e-6):
-                        self._logger.info(f"  BL matched: marker_id={marker_id}, corner_idx={corner_idx}, 2D={corner}")
                         self._ids_diag[3] = marker_id
                         continue
-
-        self._logger.info(f"Diagonal IDs: TL={self._ids_diag[0]}, TR={self._ids_diag[1]}, BR={self._ids_diag[2]}, BL={self._ids_diag[3]}")
 
         tl_3d = marker_data[self._ids_diag[0]]['tvec']
         tr_3d = marker_data[self._ids_diag[1]]['tvec']
         br_3d = marker_data[self._ids_diag[2]]['tvec']
         bl_3d = marker_data[self._ids_diag[3]]['tvec']
 
-        diag_main = br_3d - tl_3d
-        diag_aux = bl_3d - tr_3d
-
-
-        norm1 = float(np.linalg.norm(diag_main))
-        norm2 = float(np.linalg.norm(diag_aux))
-
-        cos = np.clip((diag_main @ diag_aux) / (norm1 * norm2), -1, 1)
-
-        angle = np.arccos(cos)
-
-        self._logger.info(f'Angle between diagonals: {angle:.2f} deg, ratio: {norm1/norm2:.2f}.')  # Главная проблема: по логам видно, что инвариантные независимо от базиса характеристики плоскости различны у разных ракурсов
-
-        return diag_main, diag_aux
+        return br_3d - tl_3d, bl_3d - tr_3d
 
 
     def reset(self):

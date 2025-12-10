@@ -10,7 +10,7 @@ class ShadowHandler(FunctionsGroup):
         super().__init__(state)
         self._STARTED_METHOD = Method.DETECT_LIGHT_MARKER
         self._transition = {
-            Method.DETECT_LIGHT_MARKER:    (Method.EXIT, DetectLightMarker(self._state)),
+            Method.DETECT_LIGHT_MARKER:    (Method.GET_SHADOW, DetectLightMarker(self._state)),
             Method.GET_SHADOW:             (Method.EXIT, GetShadow(self._state))
         }
 
