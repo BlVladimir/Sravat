@@ -22,7 +22,6 @@ shadow_files = [f for f in os.listdir(shadow_folder) if f.lower().endswith('.jpg
 
 camera_calibration = CameraCalibrationStrategy()
 for image_name in chess_files:
-    print(os.path.join(chass_folder, image_name))
     frame = cv2.imread(os.path.join(chass_folder, image_name))
     camera_calibration(frame)
 

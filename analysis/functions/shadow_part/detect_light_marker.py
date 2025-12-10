@@ -51,8 +51,6 @@ class DetectLightMarker(Function):
 
             y_axis_angle = euler_angles[1]
 
-            self._logger.info(f'y_axis_angle: {y_axis_angle}')
-
             self._state.light_rotation = y_axis_angle
 
 

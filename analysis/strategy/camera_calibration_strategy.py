@@ -89,7 +89,7 @@ class CameraCalibrationStrategy:
             return change_percentage
 
         except Exception as e:
-            self._logger.error(f"Ошибка при вычислении изменения кадра: {e}")
+            self._logger.error(f'Ошибка при вычислении изменения кадра: {e}')
             return 1.0
 
     def _process_frame(self, frame: np.ndarray):
@@ -128,7 +128,6 @@ class CameraCalibrationStrategy:
     def _calibrate(self):
         """Выполняет калибровку камеры"""
         try:
-            self._logger.info("Начинаю калибровку камеры...")
 
             ret, self._camera_matrix, self._dist_coeffs, rvecs, tvecs = cv2.calibrateCamera(
                 self._all_obj_points,
@@ -159,7 +158,6 @@ class CameraCalibrationStrategy:
                  square_size=self._square_size,
                  calibration_date=np.datetime64('now'))
 
-        self._logger.info(f"Калибровка сохранена в {self._filename}")
 
     def reset(self):
         """Сбрасывает данные калибровки для новой попытки"""
@@ -169,4 +167,3 @@ class CameraCalibrationStrategy:
         self.is_calibrated = False
         self._camera_matrix = None
         self._dist_coeffs = None
-        self._logger.info("Данные калибровки сброшены")

@@ -48,5 +48,3 @@ class CreatingModel(Function):
                 for face in indices:
                     v1, v2, v3 = face + 1
                     f.write(f'f {v1} {v2} {v3}\n')
-
-        self._logger.info(f'OBJ файл сохранен: {self._filename}')

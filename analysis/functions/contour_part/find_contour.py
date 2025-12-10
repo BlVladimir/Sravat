@@ -48,7 +48,6 @@ class FindContour(Function):
         if sorted_contours:
             contour = sorted_contours[0]
             cv2.drawContours(frame, [contour], -1, (0, 255, 0), 2, cv2.LINE_AA)
-            self._logger.info(cv2.contourArea(contour))
             self._state.current_frame = frame
             self._state.contour = contour
         else:

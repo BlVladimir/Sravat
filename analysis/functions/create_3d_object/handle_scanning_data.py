@@ -19,17 +19,12 @@ class HandleScanningData(Function):
     def __call__(self, *args, **kwargs):
         contours = list(map(self._transform_to_local_coordinates, self._state.scanning_data))
 
-        self._logger.info(f'contours length: {len(contours)}')
-
-        main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt, _ = self._state.scanning_data[0]
-
         parallelepiped = self._calculate_parallelepiped(contours)
         points = scanning_optimized.process_contours_optimized(parallelepiped, contours)
 
         mask = points < self._THRESHOLD
         self._state.object3d = parallelepiped[mask]
 
-        self._logger.info(f'object3d shape: {self._state.object3d.shape}')
 
         self._state.scanning_data = []
 
@@ -140,9 +135,6 @@ class HandleScanningData(Function):
         num_cells_x = self._special_round((max_coords_margin[0] - min_coords_margin[0]) / step)
         num_cells_y = self._special_round((max_coords_margin[1] - min_coords_margin[1]) / step)
         num_cells_z = self._special_round((max_coords_margin[2] - min_coords_margin[2]) / step)
-
-        self._logger.info(
-            f"Grid size: {num_cells_x} x {num_cells_y} x {num_cells_z} = {num_cells_x * num_cells_y * num_cells_z} cells")
 
         parallelepiped = np.array([
             [

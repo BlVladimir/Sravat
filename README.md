@@ -104,17 +104,6 @@ pip install -r requirements.txt
 ## MainStrategy
 Каждый из обработчиков является машиной состояний. У них есть начальное состояние и переходы между ними, причем каждому состоянию соответствует функция(за исключением состояния EXIT, которое соответствует выходу из обработчика). Так же каждая функция обернута в декоратор handle_exceptions, который выводит в лог ошибку и меняет состояние на ERROR, которое так же приведет к выходу из обработчика. После каждого вызова обработчика MAinStrategy проверяет текущее состояние на равенство ERROR, и если оно случилось, то сразу возвращает кадр без изменений, не вызывая последующие обработчики. Если же все обработчики успешно вызвались, то просто вернет текущий кадр 
 
-## Структура проекта:
-```
-Sravat/
-├── analysis
-├── sandbox/   тестировочные файлы и не вошедшие в итоговую реализвцию
-├── scanning_optimized
-├── venv            
-├── requirements.txt
-└── README.md
-```
-
 ```mermaid
 classDiagram
     direction TB
@@ -147,21 +136,25 @@ classDiagram
     
     %% Обработчики-наследники FunctionsGroup
     class MarkersHandler {
+        #logger
         +__call__()
         +reset()
     }
     
     class ContourHandler {
+        #logger
         +__call__()
         +reset()
     }
     
     class ProcessData {
+        #logger
         +__call__()
         +reset()
     }
     
     class ShadowHandler {
+        #logger
         +__call__()
         +reset()
     }

@@ -64,7 +64,6 @@ class Config:
     def load_calibration(cls):
         """Загружает результаты калибровки"""
         if not os.path.exists('camera_calibration.npz'):
-            warning(f"Файл калибровки не найден")
             return False
         try:
             data = np.load('camera_calibration.npz')
