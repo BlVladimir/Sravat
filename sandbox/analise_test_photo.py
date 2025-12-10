@@ -13,8 +13,8 @@ from sandbox.scene3d.run3d import Run3D
 """
 Для быстрой тестировки без вебки
 """
-image_folder = '/.../Sravat/sandbox/test_photo'
-chass_folder = '/.../Sravat/sandbox/chess_photo'
+image_folder = 'C:/Users/vladi/PycharmProjects/Sravat/sandbox/test_photo'
+chass_folder = 'C:/Users/vladi/PycharmProjects/Sravat/sandbox/chess_photo'
 jpg_files = [f for f in os.listdir(image_folder) if f.lower().endswith('.jpg')]
 chess_files = [f for f in os.listdir(chass_folder) if f.lower().endswith('.jpg')]
 

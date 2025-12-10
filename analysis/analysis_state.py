@@ -26,7 +26,7 @@ class Method(Enum):
 @dataclass
 class State:
     """Хранит переменные, которые используют функции обнаружения"""
-    method:Method = Method.DETECT_RECT_MARKERS  # Текущий метод
+    method:Method = Method.EXIT  # Текущий метод
 
     centers: List[np.ndarray] = field(default_factory=list)  # Центры маркеров
     src_points: List = field(default_factory=list)  # 2d координаты углов, являющиеся вершинами четырехугольника
@@ -49,3 +49,4 @@ class State:
 
     vertices = None  # вершины
     indices = None  # указатели вершин
+    light_rotation = 0.0  # Поворот лучей по Y

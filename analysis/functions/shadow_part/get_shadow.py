@@ -10,12 +10,17 @@ class GetShadow(Function):
     """
     Проецирует 3D модель на плоскость четырехугольника маркеров для получения тени
     """
+
     def __init__(self, state: State):
         super().__init__(state)
-        self._LIGHT_ANGLE_DEG = Config.ANGLE_OF_INCIDENCE
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):
+        angle_incidence_deg = np.radians(Config.ANGLE_OF_INCIDENCE)
+
+        y_axis_angle_rad = self._state.light_rotation
+
+        total_light_angle_rad = angle_incidence_deg + y_axis_angle_rad
 
         vertices = self._state.vertices
         indices = self._state.indices
@@ -29,17 +34,24 @@ class GetShadow(Function):
         x_axis = main_diag / np.linalg.norm(main_diag)
 
         z_axis = np.cross(main_diag, aux_diag)
-        z_axis = z_axis / np.linalg.norm(z_axis)
+        if np.linalg.norm(z_axis) < 1e-10:
+            z_axis = np.array([0, 0, 1.0], dtype=np.float32)
+        else:
+            z_axis = z_axis / np.linalg.norm(z_axis)
 
         y_axis = np.cross(z_axis, x_axis)
         y_axis = y_axis / np.linalg.norm(y_axis)
 
+        x_axis = x_axis / np.linalg.norm(x_axis)
+        y_axis = y_axis - np.dot(y_axis, x_axis) * x_axis
+        y_axis = y_axis / np.linalg.norm(y_axis)
+        z_axis = np.cross(x_axis, y_axis)
         basis_matrix = np.array([x_axis, y_axis, z_axis])
 
         light_direction_local = np.array([
-            np.cos(self._LIGHT_ANGLE_DEG),
+            np.cos(total_light_angle_rad),
             0.0,
-            -np.sin(self._LIGHT_ANGLE_DEG)
+            -np.sin(total_light_angle_rad)
         ], dtype=np.float32)
 
         light_direction = basis_matrix.T @ light_direction_local
@@ -74,8 +86,7 @@ class GetShadow(Function):
         self._overlay_shadow_on_frame(shadow_image)
 
     def _render_shadow_to_image(self, shadow_points_2d, indices, image_size=512):
-        """Рендерит тень в изображение"""
-
+        """Рендер тень в изображение"""
         min_coords = np.min(shadow_points_2d, axis=0)
         max_coords = np.max(shadow_points_2d, axis=0)
 
@@ -125,4 +136,3 @@ class GetShadow(Function):
             ).astype(np.uint8)
 
         self._state.current_frame = frame
-
