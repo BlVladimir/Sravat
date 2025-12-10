@@ -13,7 +13,7 @@ class HandleScanningData(Function):
     def __init__(self, state:State, edge:int) -> None:
         super().__init__(state)
         self._EDGE = edge  # Максимальное количество вокселей по одной из осей
-        self._THRESHOLD = Config.PHOTO_COUNTS  # Сколько контуров должно указать на отсутсвие куба в точке, чтобы его не учитывать
+        self._THRESHOLD = 1  # Сколько контуров должно указать на отсутсвие куба в точке, чтобы его не учитывать
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):

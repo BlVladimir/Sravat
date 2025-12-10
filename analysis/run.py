@@ -1,4 +1,5 @@
 from logging import getLogger
+from unittest import case
 
 from analysis.facade_analysis import FacadeAnalysis
 from logger_config import setup_logging
@@ -32,16 +33,20 @@ class RunTime:
             ret, frame = self.cap.read()
             if not ret:
                 self.logger.error('Failed to capture frame')
+                continue
 
             result_frame = self.facade.analyze_frame(frame)
 
             cv2.imshow('Original', result_frame)
 
             key = cv2.waitKey(1) & 0xFF
-            if key == ord('q'):
-                break
-
-
+            match key:
+                case ord('q'):
+                    break
+                case ord('r'):
+                    self.facade.reset()
+                case ord('c'):
+                    self.facade.recalibrate()
 
 if __name__ == '__main__':
     runtime = RunTime()

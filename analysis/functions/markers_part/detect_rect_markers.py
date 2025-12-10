@@ -223,6 +223,6 @@ class DetectRectMarkers(Function):
         return diag_main, diag_aux
 
 
-def reset(self):
-        self._ids_diag = []
-        self._idx_corners = {}
+    def reset(self):
+            self._ids_diag = []
+            self._idx_corners = {}

@@ -49,8 +49,7 @@ class ContourHandler(FunctionsGroup):
         self._prev_dvec = None
         self._cur_dvec = None
 
-        for _, (_, method) in self._transition.items():
-            method.reset()
+        super().reset()
 
     def __bool__(self):
         return True

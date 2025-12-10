@@ -25,6 +25,13 @@ class FacadeAnalysis:
             self._is_calibrated = Config.load_calibration()
             return frame
 
+    def recalibrate(self):
+        self._camera_calibration.reset()
+        self._is_calibrated = False
+
+    def reset(self):
+        self._main_strategy.reset()
+
 
 class EmptyFacadeAnalysis:
     """Тестировачный пустой фасад"""

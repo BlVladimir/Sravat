@@ -22,7 +22,7 @@ class DrawPlane(Function):
         cv2.fillPoly(mask, [pts], 255)
 
         mask_inverted = cv2.bitwise_not(mask)
-        frame[mask_inverted == 255] = [255, 255, 255]
+        # frame[mask_inverted == 255] = [255, 255, 255]
         cv2.polylines(frame, [pts], True, Config.COLORS['contour'], 3)
 
         cv2.addWeighted(frame, 0.2, frame, 0.8, 0, frame)

@@ -21,3 +21,8 @@ class FunctionsGroup(ABC):
             next_method, function = self._transition[self._state.method]
             self._state.method = next_method
             function()
+
+    def reset(self):
+        """Подготовка к переиспользованию класса"""
+        for _, (_, method) in self._transition.items():
+            method.reset()

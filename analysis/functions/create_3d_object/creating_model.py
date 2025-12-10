@@ -21,6 +21,10 @@ class CreatingModel(Function):
         self._write_obj(vertices, indices, normals)
 
 
+    def reset(self):
+        self._state.vertices = None
+        self._state.indices = None
+
     def _write_obj(self, vertices:np.ndarray, indices:np.ndarray, normals:np.ndarray):
         """Записывает меш в файл формата OBJ"""
         with open(self._filename, 'w', encoding='utf-8') as f:

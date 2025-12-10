@@ -14,7 +14,7 @@ class Config:
     }
 
     MARKER_SIZE = 0.05  # Физический размер маркеров в м.
-    PHOTO_COUNTS = 1  # Количество данных для создания модели (для 1 просто призма контура. >1 если бы переход к 3D работал стабильно, улучшало бы качество 3D модели)
+    PHOTO_COUNTS = 10  # Количество данных для создания модели (для 1 просто призма контура. >1 если бы переход к 3D работал стабильно, улучшало бы качество 3D модели)
     EDGE = 200  # Максимальное количество вокселей по одной из осей
 
     ANGLE_OF_INCIDENCE = np.pi / 4  # угол падения света
@@ -36,3 +36,9 @@ class Config:
         except Exception as e:
             error(f'Ошибка загрузки калибровки: {e}')
             return False
+
+    @classmethod
+    def update_calibration(cls, camera_matrix, dist_coeffs):
+        """Обновляет параметры калибровки камеры"""
+        cls.camera_matrix = camera_matrix
+        cls.dist_coeffs = dist_coeffs

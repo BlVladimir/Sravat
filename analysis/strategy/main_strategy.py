@@ -42,3 +42,10 @@ class MainAnalysisStrategy:
                 self._after_markers_handler = self._shadow_handler
 
         return self._state.current_frame
+
+    def reset(self):
+        self._after_markers_handler = self._contour_handler
+        self._contour_handler.reset()
+        self._markers_handler.reset()
+        self._shadow_handler.reset()
+        self._process_data.reset()
