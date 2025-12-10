@@ -7,22 +7,22 @@ from analysis.functions.function import Function, handle_exceptions
 
 
 class CreatingModel(Function):
+    """Создает модель"""
     def __init__(self, state:State):
         super().__init__(state)
-        self._filename:str = "model.obj"
+        self._filename:str = 'model.obj'  # название файла, в котором будет лежать модель в формате .obj
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):
         centers, cube_side = self._state.object3d, self._state.cube_side
-        if hasattr(cv2, 'viz') or True:
-            vertices, indices, normals = scanning_optimized.build_voxel_mesh_with_normals(centers, cube_side)
-            self._write_obj_simple(vertices, indices, normals)
-        else:
-            vertices, indices = scanning_optimized.build_voxel_mesh(centers, cube_side)
+        vertices, indices, normals = scanning_optimized.build_voxel_mesh_with_normals(centers, cube_side)
+        self._state.vertices = vertices
+        self._state.indices = indices
+        self._write_obj(vertices, indices, normals)
 
 
-    def _write_obj_simple(self, vertices:np.ndarray, indices:np.ndarray, normals:np.ndarray):
-        """Записывает меш в файл формата OBJ. Нужно исключительно для визуализации в окне Viz"""
+    def _write_obj(self, vertices:np.ndarray, indices:np.ndarray, normals:np.ndarray):
+        """Записывает меш в файл формата OBJ"""
         with open(self._filename, 'w', encoding='utf-8') as f:
             f.write('# Generated from voxel mesh\n')
             f.write(f'# Vertices: {len(vertices)}, Faces: {len(indices)}\n\n')

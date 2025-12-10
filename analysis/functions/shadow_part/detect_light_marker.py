@@ -1,9 +1,11 @@
+from analysis.analysis_state import Method
 from analysis.functions.function import Function, handle_exceptions
 
 import cv2
 
 
 class DetectLightMarker(Function):
+    """Ищет маркер света"""
     def __init__(self, state):
         super().__init__(state)
         self.aruco_light_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_5X5_100)
@@ -15,9 +17,9 @@ class DetectLightMarker(Function):
         frame = self._state.current_frame
         corners, ids, rejected = self.detector_light_markers.detectMarkers(frame)
 
-        if ids is None:
+        if ids is None or len(ids) != 1:
+            self._state.method = Method.ERROR
             return
-        # Рисуем обнаруженные маркеры
         output_frame = frame.copy()
         cv2.aruco.drawDetectedMarkers(output_frame, corners, ids)
 

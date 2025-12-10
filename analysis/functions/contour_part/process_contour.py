@@ -20,7 +20,7 @@ class ProcessContour(Function):
 
         bottom_point = points[max_y_idx]
 
-        bottom_point_3d = self.project_bottom_point_to_3d(bottom_point)
+        bottom_point_3d = self._project_bottom_point_to_3d(bottom_point)
 
         marker_id_0 = self._state.start_vecs[0]
         marker_id_1 = self._state.start_vecs[1]
@@ -31,7 +31,7 @@ class ProcessContour(Function):
 
         contour_3d_points = []
         if bottom_point_3d is not None and Config.camera_matrix is not None:
-            plane_normal = np.array([0.0, 0.0, -1.0])
+            plane_normal = np.array([0.0, 0.0, 1.0], dtype=np.float32)
             plane_d = -np.dot(plane_normal, bottom_point_3d)
             plane_equation = (plane_normal, plane_d)
 
@@ -57,11 +57,10 @@ class ProcessContour(Function):
                 contour_3d_array
             ))
 
-    def project_bottom_point_to_3d(self, bottom_point):
+    def _project_bottom_point_to_3d(self, bottom_point):
         """
-        Определяет 3D координату нижней точки на основе её относительного положения в 2D
+        Определяет 3D координату нижней точки на плоскости четырехугольника
         """
-
         tl, tr, br, bl = self._state.src_points
 
         tl = np.array(tl, dtype=np.float32)
@@ -72,9 +71,7 @@ class ProcessContour(Function):
         u, v = 0.5, 0.5
         for _ in range(10):
             top_interp = (1 - u) * tl + u * tr
-
             bottom_interp = (1 - u) * bl + u * br
-
             point_estimate = (1 - v) * top_interp + v * bottom_interp
 
             du_vec = (1 - v) * (tr - tl) + v * (br - bl)
@@ -95,40 +92,51 @@ class ProcessContour(Function):
             except:
                 break
 
-        corners_3d = []
-        sorted_ids = sorted(self._state.marker_data.keys())[:4]
+        tl_2d_src, tr_2d_src, br_2d_src, bl_2d_src = self._state.src_points
 
-        for marker_id in sorted_ids:
-            tvec = self._state.marker_data[marker_id]['tvec']
-            corners_3d.append(tvec)
-        tl_3d, tr_3d, br_3d, bl_3d = corners_3d
+        tl_3d = None
+        tr_3d = None
+        br_3d = None
+        bl_3d = None
+
+        for marker_id, data in self._state.marker_data.items():
+            main_corner = data['main_corner']
+            tvec_3d = data['tvec']
+
+            if np.allclose(main_corner, tl_2d_src, atol=1e-6):
+                tl_3d = tvec_3d
+            elif np.allclose(main_corner, tr_2d_src, atol=1e-6):
+                tr_3d = tvec_3d
+            elif np.allclose(main_corner, br_2d_src, atol=1e-6):
+                br_3d = tvec_3d
+            elif np.allclose(main_corner, bl_2d_src, atol=1e-6):
+                bl_3d = tvec_3d
 
         top_interp_3d = (1 - u) * tl_3d + u * tr_3d
         bottom_interp_3d = (1 - u) * bl_3d + u * br_3d
         point_3d = (1 - v) * top_interp_3d + v * bottom_interp_3d
 
-        n, d = self._state.plane_equation
-
-        distance = np.dot(n, point_3d) + d
-
-        point_3d_corrected = point_3d - distance * n
-
-        return point_3d_corrected
+        return point_3d
 
     @staticmethod
     def project_2d_to_3d(point_2d, camera_matrix, plane_equation):
-        """Проецирует 2D точку изображения в 3D на заданной плоскости"""
+        """Проецирует 2D точку изображения в 3D на заданной плоскости
+        """
         n, d = plane_equation
-        inv_K = np.linalg.inv(camera_matrix)
-        point_2d_hom = np.array([point_2d[0], point_2d[1], 1.0])
-        ray_dir = inv_K.dot(point_2d_hom)
-        ray_dir = ray_dir / np.linalg.norm(ray_dir)
 
+        inv_K = np.linalg.inv(camera_matrix)
+        point_2d_hom = np.array([point_2d[0], point_2d[1], 1.0], dtype=np.float32)
+        ray_dir = inv_K @ point_2d_hom
         denominator = np.dot(n, ray_dir)
+
         if abs(denominator) < 1e-6:
             return None
 
         t = -d / denominator
-        point_3d = t * ray_dir
-        return point_3d
 
+        if t < 0:
+            return None
+
+        point_3d = t * ray_dir
+
+        return point_3d

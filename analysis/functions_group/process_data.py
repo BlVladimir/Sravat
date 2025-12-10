@@ -6,6 +6,7 @@ from analysis.functions_group.functions_group import FunctionsGroup
 
 
 class ProcessData(FunctionsGroup):
+    """Создание 3D модели из данных о контуре"""
     def __init__(self, state: State):
         super().__init__(state)
         self._STARTED_METHOD = Method.HANDLE_SCANNING_DATA

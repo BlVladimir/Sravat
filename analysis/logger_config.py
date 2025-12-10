@@ -3,7 +3,6 @@ import logging
 
 class ANSIColorFormatter(logging.Formatter):
     """Форматтер с ANSI-цветами для терминала"""
-
     WHITE = '\033[97m'
     GREY = '\033[37m'
     YELLOW = '\033[93m'
@@ -26,7 +25,7 @@ class ANSIColorFormatter(logging.Formatter):
         return f"{color}{message}{self.RESET}"
 
 def setup_logging():
-    """Настройка логирования. Необходим вызов функции в начале выполнения программы"""
+    """Настройка логирования"""
     logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
 

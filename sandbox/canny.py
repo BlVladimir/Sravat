@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 
 
-class Adaptive(Function):
+class CannyMethod(Function):
     def __init__(self, state):
         super().__init__(state)
 
@@ -19,25 +19,23 @@ class Adaptive(Function):
         pts = np.int32(self._state.src_points)
         cv2.fillPoly(mask, [pts], 255)
 
-        # Применяем адаптивный порог
-        binary = cv2.adaptiveThreshold(
-            gray,
-            255,
-            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv2.THRESH_BINARY_INV,
-            11,  # размер блока для вычисления порога
-            2  # константа вычитания из среднего
-        )
+        gray = cv2.bitwise_and(gray, gray, mask=mask)
 
-        binary = cv2.bitwise_and(binary, binary, mask=mask)
+        masked_pixels = gray[mask == 255]
+        median_val = np.median(masked_pixels)
 
-        # Морфологические операции для очистки от шума
-        kernel = np.ones((3, 3), np.uint8)
-        binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)  # убираем шум
-        binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)  # заполняем дыры
+        sigma = 0.33
+        lower = int(max(0, (1.0 - sigma) * median_val))
+        upper = int(min(255, (1.0 + sigma) * median_val))
 
-        # Находим контуры
-        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        edges = cv2.Canny(gray, lower, upper)
+
+        edges = cv2.bitwise_and(edges, edges, mask=mask)
+
+        kernel = np.ones((2, 2), np.uint8)
+        edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+
+        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         if not contours:
             return
@@ -45,7 +43,6 @@ class Adaptive(Function):
         min_area = 100
         approximation_epsilon = 0.008
 
-        # Фильтруем контуры по площади
         valid_contours = [cnt for cnt in contours if cv2.contourArea(cnt) > min_area]
 
         if not valid_contours:
@@ -53,7 +50,6 @@ class Adaptive(Function):
 
         main_contour = max(valid_contours, key=cv2.contourArea)
 
-        # Аппроксимируем контур (упрощаем)
         epsilon = approximation_epsilon * cv2.arcLength(main_contour, True)
         approx_contour = cv2.approxPolyDP(main_contour, epsilon, True)
 

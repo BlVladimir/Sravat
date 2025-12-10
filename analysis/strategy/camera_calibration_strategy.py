@@ -7,7 +7,7 @@ from analysis.analysis_config import Config
 
 
 class CameraCalibrationStrategy:
-    """Стратегия, получающая данные о камере"""
+    """Стратегия, получающая данные о камере из четырех маркеров"""
     def __init__(self):
         self.logger = getLogger(type(self).__name__)
         self.NUM_IMAGES = 5
@@ -79,7 +79,7 @@ class CameraCalibrationStrategy:
             self._save_calibration()
 
         except Exception as e:
-            self.logger.error(f"Ошибка калибровки: {e}")
+            self.logger.error(f'Ошибка калибровки: {e}')
 
     def _save_calibration(self):
         """Сохраняет результаты калибровки"""

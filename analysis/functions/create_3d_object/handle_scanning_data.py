@@ -1,6 +1,7 @@
 import math
 from typing import Tuple, Any
 
+from analysis.analysis_config import Config
 from analysis.analysis_state import State
 from analysis.functions.function import Function, handle_exceptions
 import numpy as np
@@ -8,64 +9,35 @@ from scanning_optimized import scanning_optimized
 
 
 class HandleScanningData(Function):
+    """Из контуров создает массив из центров кубов, которые вместе образуют объект"""
     def __init__(self, state:State, edge:int) -> None:
         super().__init__(state)
-        self._EDGE = edge
-        self._THRESHOLD = 14
+        self._EDGE = edge  # Максимальное количество вокселей по одной из осей
+        self._THRESHOLD = Config.PHOTO_COUNTS  # Сколько контуров должно указать на отсутсвие куба в точке, чтобы его не учитывать
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):
-        """Из контуров создает массив из центров кубов, которые вместе образуют объект"""
         contours = list(map(self._transform_to_local_coordinates, self._state.scanning_data))
 
-        self._logger.info(f"contours length: {len(contours)}")
-        if contours:
-            self._logger.info(f"first contour type: {type(contours[0])}")
-            if isinstance(contours[0], tuple) and len(contours[0]) == 2:
-                self._logger.info(
-                    f"first element type: {type(contours[0][0])}, shape: {contours[0][0].shape if hasattr(contours[0][0], 'shape') else 'no shape'}")
-                self._logger.info(
-                    f"second element type: {type(contours[0][1])}, shape: {contours[0][1].shape if hasattr(contours[0][1], 'shape') else 'no shape'}")
+        self._logger.info(f'contours length: {len(contours)}')
 
         main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt, _ = self._state.scanning_data[0]
 
-        self._logger.info(f"main_vec type: {type(main_vec)}, value: {main_vec}")
-        self._logger.info(f"auxiliary_vec type: {type(auxiliary_vec)}, value: {auxiliary_vec}")
-        self._logger.info(f"origin_main_pnt type: {type(origin_main_pnt)}, value: {origin_main_pnt}")
-        self._logger.info(f"origin_auxiliary_pnt type: {type(origin_auxiliary_pnt)}, value: {origin_auxiliary_pnt}")
-
-        parallelepiped = self._calculate_parallelepiped(main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt)
-
-        self._logger.info(f"parallelepiped type: {type(parallelepiped)}, shape: {parallelepiped.shape}")
-
-        # Проверяем, что все элементы contours - это кортежи numpy массивов
-        for i, contour in enumerate(contours):
-            if not isinstance(contour, tuple) or len(contour) != 2:
-                self._logger.error(f"contour {i} is not a tuple of length 2: {type(contour)}")
-            elif not isinstance(contour[0], np.ndarray) or not isinstance(contour[1], np.ndarray):
-                self._logger.error(f"contour {i} elements are not numpy arrays: {type(contour[0])}, {type(contour[1])}")
-
+        parallelepiped = self._calculate_parallelepiped(contours)
         points = scanning_optimized.process_contours_optimized(parallelepiped, contours)
 
-        self._logger.info(
-            f"points type: {type(points)}, shape: {points.shape if hasattr(points, 'shape') else 'no shape'}")
-        self._logger.info(f"points min: {np.min(points)}, max: {np.max(points)}, mean: {np.mean(points)}")
-        self._logger.info(f"THRESHOLD: {self._THRESHOLD}")
-
-        mask = points <= self._THRESHOLD
-
-        self._logger.info(f"mask type: {type(mask)}, shape: {mask.shape if hasattr(mask, 'shape') else 'no shape'}")
-        self._logger.info(f"mask True count: {np.sum(mask)}, False count: {np.sum(~mask)}")
-
+        mask = points < self._THRESHOLD
         self._state.object3d = parallelepiped[mask]
 
-        self._logger.info(f"object3d shape: {self._state.object3d.shape}")
+        self._logger.info(f'object3d shape: {self._state.object3d.shape}')
 
         self._state.scanning_data = []
 
     @staticmethod
     def _transform_to_local_coordinates(data:Tuple[np.ndarray, np.ndarray, np.ndarray, Any, np.ndarray]):
-        """Преобразует точки в систему координат от диагонали."""
+        """
+        Преобразует точки в систему координат от диагонали.
+        """
         main_vector, auxiliary_vector, origin_point, _ , points_array = data
         main_vec = np.array(main_vector, dtype=np.float32)
         aux_vec = np.array(auxiliary_vector, dtype=np.float32)
@@ -140,29 +112,48 @@ class HandleScanningData(Function):
 
         return result_points, result_R
 
-    def _calculate_parallelepiped(self, main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt):
-        """Создание параллелепипеда, из которого будет вырезан объект"""
-        norm1 = float(np.linalg.norm(main_vec))
-        norm2 = float(np.linalg.norm(auxiliary_vec))
-        cos_alpha = (main_vec @ auxiliary_vec)/(norm1 * norm2)
-        sin_alpha = np.sqrt(1 - cos_alpha**2)
-        b = (norm2 / norm1)*sin_alpha
-        h = min(1, b)
+    def _calculate_parallelepiped(self, contours, margin=1.1):
+        """
+        Вычисляет параллелепипед на основе всех точек контуров
+        """
+        all_points = []
+        for contour_points, _ in contours:
+            all_points.extend(contour_points)
 
-        r = origin_auxiliary_pnt - origin_main_pnt
-        norm2_r = float(np.linalg.norm(r))
-        cos_alpha_r = (main_vec @ r) / (norm1 * norm2_r)
-        sin_alpha_r = np.sqrt(1 - cos_alpha_r ** 2)
+        all_points = np.array(all_points, dtype=np.float32)
 
-        y0 = -(norm2_r/norm1)*sin_alpha_r
+        min_coords = np.min(all_points, axis=0)
+        max_coords = np.max(all_points, axis=0)
 
-        step = max(1, b)/self._EDGE
+        center = (min_coords + max_coords) / 2
+        sizes = max_coords - min_coords
+
+        sizes_with_margin = sizes * margin
+
+        min_coords_margin = center - sizes_with_margin / 2
+        max_coords_margin = center + sizes_with_margin / 2
+
+        max_size = np.max(sizes_with_margin)
+        step = max_size / self._EDGE
         self._state.cube_side = step
 
-        parallelepiped = np.array([[(x + 0.5) * step, (y + 0.5) * step, (z + 0.5) * step]
-                                   for x in range(0, self._special_round(1 / step))
-                                   for y in range(self._special_round(y0 / step, 'floor'), self._special_round((y0 + b) / step))
-                                   for z in range(0, self._special_round(h / step))], dtype=np.float32)
+        num_cells_x = self._special_round((max_coords_margin[0] - min_coords_margin[0]) / step)
+        num_cells_y = self._special_round((max_coords_margin[1] - min_coords_margin[1]) / step)
+        num_cells_z = self._special_round((max_coords_margin[2] - min_coords_margin[2]) / step)
+
+        self._logger.info(
+            f"Grid size: {num_cells_x} x {num_cells_y} x {num_cells_z} = {num_cells_x * num_cells_y * num_cells_z} cells")
+
+        parallelepiped = np.array([
+            [
+                min_coords_margin[0] + (x + 0.5) * step,
+                min_coords_margin[1] + (y + 0.5) * step,
+                min_coords_margin[2] + (z + 0.5) * step
+            ]
+            for x in range(num_cells_x)
+            for y in range(num_cells_y)
+            for z in range(num_cells_z)
+        ], dtype=np.float32)
 
         return parallelepiped
 

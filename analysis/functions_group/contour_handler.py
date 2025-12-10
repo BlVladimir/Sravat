@@ -10,6 +10,7 @@ from analysis.functions_group.functions_group import FunctionsGroup
 
 
 class ContourHandler(FunctionsGroup):
+    """Обрабатывает текущий кадр и запускает анализ контура при необходимости."""
     def __init__(self, state: State):
         super().__init__(state)
         self._STARTED_METHOD = Method.FIND_CONTOUR
@@ -22,7 +23,6 @@ class ContourHandler(FunctionsGroup):
         self._cur_dvec:Optional[np.ndarray] = None
 
     def __call__(self, *args, **kwargs):
-        """Обрабатывает текущий кадр и запускает анализ контура при необходимости."""
         self._cur_dvec = self._state.dvecs[0]
 
         if self._prev_dvec is None:
@@ -53,4 +53,4 @@ class ContourHandler(FunctionsGroup):
             method.reset()
 
     def __bool__(self):
-        return False
+        return True

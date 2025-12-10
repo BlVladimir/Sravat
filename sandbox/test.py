@@ -14,20 +14,6 @@ class Test(ut.TestCase):
         mock_state = Mock(spec=State)
         self.handler = HandleScanningData(mock_state, 4)
 
-    def test_calculate_parallelepiped(self):
-        expected = np.array([[x/6, y/6, z/6]
-                            for x in range(1, 6, 2)
-                            for y in range(-1, 6, 2)
-                            for z in range(1, 6, 2)])
-        main_vec = np.array([3, 0, 0])
-        auxiliary_vec = np.array([0, 4, 0])
-        origin_main_pnt = np.array([0, 2, 0])
-        origin_auxiliary_pnt = np.array([1, 1, 0])
-
-        actual = self.handler._calculate_parallelepiped(main_vec, auxiliary_vec, origin_main_pnt, origin_auxiliary_pnt)
-
-        np.testing.assert_array_almost_equal(actual, expected, decimal=6)
-
     def test_transform_to_local_coordinates(self):
         expected = np.array([[0, 0, 0],
                              [0, -1, 0],

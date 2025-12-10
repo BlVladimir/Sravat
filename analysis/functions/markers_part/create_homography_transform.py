@@ -3,11 +3,11 @@ from analysis.functions.function import Function, handle_exceptions
 import numpy as np
 
 class CreateHomographyTransform(Function):
-    """Создает гомографию для преобразования плоскости"""
-
+    """
+    Расчет уравнения плоскости четырехугольника. Название связано с историей создания функции
+    """
     @handle_exceptions
     def __call__(self, *args, **kwargs):
-        """Создает гомографию для преобразования плоскости"""
         points_3d = np.array(
             [np.array(self._state.marker_data[marker_id]['tvec'], dtype=np.float32)
              for marker_id in self._state.marker_data.keys()],

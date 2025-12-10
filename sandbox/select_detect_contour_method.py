@@ -21,7 +21,6 @@ class SelectDetectContourMethod(Function):
                 pts = np.int32(self._state.src_points)
                 cv2.fillPoly(mask, [pts], 255)
 
-                # Применяем маску к изображению
                 gray = cv2.bitwise_and(gray, gray, mask=mask)
 
             laplacian = cv2.Laplacian(gray, cv2.CV_64F).var()

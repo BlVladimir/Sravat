@@ -4,12 +4,12 @@ from analysis.facade_analysis import FacadeAnalysis
 from logger_config import setup_logging
 import cv2
 
-from rudiments.scene3d.run3d import Run3D
+from sandbox.scene3d.run3d import Run3D
 
 
 class RunTime:
-    """Замена сайта в окне"""
-    obj:'RunTime' = None
+    """Основной класс"""
+    obj:'RunTime' = None  # одиночка
 
     def __init__(self):
         self.obj = self
@@ -21,14 +21,14 @@ class RunTime:
 
 
     def __call__(self):
-        has_viz = hasattr(cv2, 'viz')
-        # has_viz = False
-        if has_viz:
-            run3d = Run3D(self.facade._main_strategy._state)  # нарушать инкапсуляцию можно, если это упрощает тестирование
-            run3d.setup()
+        # has_viz = hasattr(cv2, 'viz')
+        # # has_viz = False
+        # if has_viz:
+        #     run3d = Run3D(self.facade._main_strategy._state)
+        #     run3d.setup()
         while True:
-            if has_viz:
-                run3d.show()
+            # if has_viz:
+            #     run3d.show()
             ret, frame = self.cap.read()
             if not ret:
                 self.logger.error('Failed to capture frame')
