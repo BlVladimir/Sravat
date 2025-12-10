@@ -71,7 +71,6 @@ class GetShadow(Function):
         shadow_points_2d = np.array(shadow_points_2d, dtype=np.float32)
         shadow_image = self._render_shadow_to_image(shadow_points_2d, indices)
 
-        self._state.shadow_image = shadow_image
         self._overlay_shadow_on_frame(shadow_image)
 
     def _render_shadow_to_image(self, shadow_points_2d, indices, image_size=512):

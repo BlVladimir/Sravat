@@ -39,14 +39,13 @@ class RunTime:
 
             cv2.imshow('Original', result_frame)
 
-            key = cv2.waitKey(1) & 0xFF
-            match key:
-                case ord('q'):
-                    break
-                case ord('r'):
-                    self.facade.reset()
-                case ord('c'):
-                    self.facade.recalibrate()
+            key = cv2.waitKey(3) & 0xFF
+            if key == ord('q'):
+                break
+            elif key == ord('r'):
+                self.facade.reset()
+            elif key == ord('c'):
+                self.facade.recalibrate()
 
 if __name__ == '__main__':
     runtime = RunTime()

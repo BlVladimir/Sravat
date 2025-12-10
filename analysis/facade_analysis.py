@@ -12,6 +12,7 @@ class FacadeAnalysis:
     Изоляция системы взаимодействий
     """
     def __init__(self):
+        Config.load_config()
         self._camera_calibration = CameraCalibrationStrategy()
         self._is_calibrated = Config.load_calibration()
 

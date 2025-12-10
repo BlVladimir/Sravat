@@ -2,3 +2,4 @@
 /.venv/
 /analysis/camera_calibration.npz
 /analysis/model.obj
+/analysis/config.json

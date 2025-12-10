@@ -24,7 +24,10 @@ class DetectRectMarkers(Function):
     @handle_exceptions
     def __call__(self, *args, **kwargs):
         frame = self._state.current_frame
-        corners, ids = self._detect_markers_subpixel(frame)
+        corners, ids, successful = self._detect_markers_subpixel(frame)
+
+        if not successful:
+            return
 
         # cv2.aruco.drawDetectedMarkers(frame, corners, ids)
 
@@ -61,7 +64,7 @@ class DetectRectMarkers(Function):
 
         if ids is None or len(corners) != 4:
             self.__exit()
-            return None, None
+            return None, None, False
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -72,12 +75,12 @@ class DetectRectMarkers(Function):
             cv2.cornerSubPix(gray, corner_reshaped, (3, 3), (-1, -1), criteria)
             refined_corners.append(corner_reshaped.reshape(1, 4, 2))
 
-        return refined_corners, ids
+        return refined_corners, ids, True
 
     def _estimate_marker_3d_pose(self, marker_corners_2d):
         """Оценивает 3D позицию и ориентацию маркера"""
 
-        size = Config.MARKER_SIZE
+        size = Config.MARKER_RECT_SIZE
         object_points = np.array([
             [-size / 2, -size / 2, 0],
             [size / 2, -size / 2, 0],
