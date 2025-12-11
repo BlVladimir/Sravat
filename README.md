@@ -8,15 +8,19 @@
 ```bash
 python -m venv venv
 
-venv\Scripts\activate
+venv/Scripts/activate
 
-cd ваш_путь\Sravat\rust_part
+cd ваш_путь/Sravat/rust_part
 
 pip install maturin
 
 maturin develop --release
 
 pip install -r requirements.txt
+
+cd ваш_путь/Sravat
+
+python3 -m analysis.run
 ```
 
 ## Что реализовано:

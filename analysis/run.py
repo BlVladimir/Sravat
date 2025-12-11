@@ -1,7 +1,7 @@
 from logging import getLogger
 
 from analysis.facade_analysis import FacadeAnalysis
-from logger_config import setup_logging
+from analysis.logger_config import setup_logging
 import cv2
 
 
