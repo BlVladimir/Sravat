@@ -1,5 +1,24 @@
 # Sravat
 
+## Запуск:
+файл запуска analysis\run.py
+Для запуска необходимо сначала в терминале выполнить следующие команды:
+
+### Windows:
+```bash
+python -m venv venv
+
+venv\Scripts\activate
+
+cd ваш_путь\Sravat\rust_part
+
+pip install maturin
+
+maturin develop --release
+
+pip install -r requirements.txt
+```
+
 ## Что реализовано:
 - **Задача 1**
   - Четыре маркера для указания всех сторон
@@ -52,29 +71,6 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 # Windows
 # Скачайте и установите с https://rustup.rs/
-```
-
-### Windows:
-```bash
-# 1. Создание виртуального окружения
-python -m venv venv
-
-# 2. Активация
-venv\Scripts\activate
-
-# 3. Обновление pip и установка build tools
-python -m pip install --upgrade pip
-pip install wheel setuptools
-
-# 4. Установка Maturin (для сборки Rust-модулей)
-pip install maturin
-
-# 5. Сборка и установка scanning_optimized (если есть локальная папка с Rust-кодом)
-# Перейдите в папку с Rust-модулем и выполните:
-maturin develop --release
-
-# 6. Установка остальных зависимостей
-pip install -r requirements.txt
 ```
 
 ## Файлы проекта:
