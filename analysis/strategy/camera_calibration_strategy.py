@@ -2,6 +2,7 @@ from logging import getLogger
 
 import numpy as np
 import cv2
+import os
 
 from analysis.analysis_config import Config
 
@@ -96,10 +97,8 @@ class CameraCalibrationStrategy:
         """
         Основная обработка кадра: поиск шахматной доски и сохранение данных.
         """
-        # Преобразуем в grayscale для поиска углов
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-        # Поиск углов шахматной доски
         found, corners = cv2.findChessboardCorners(
             gray,
             self._chessboard_size,
@@ -161,6 +160,13 @@ class CameraCalibrationStrategy:
 
     def reset(self):
         """Сбрасывает данные калибровки для новой попытки"""
+        try:
+            if os.path.exists(self._filename):
+                os.remove(self._filename)
+                self._logger.info(f'Файл калибровки {self._filename} удален')
+        except Exception as e:
+            self._logger.error(f'Ошибка при удалении файла калибровки: {e}')
+
         self._all_obj_points = []
         self._all_img_points = []
         self._captured_count = 0
