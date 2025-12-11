@@ -85,43 +85,56 @@ class GetShadow(Function):
 
         self._overlay_shadow_on_frame(shadow_image)
 
-    def _render_shadow_to_image(self, shadow_points_2d, indices, image_size=1024):
-        """Рендер тени в изображение с сглаживанием"""
-        min_coords = np.min(shadow_points_2d, axis=0)
-        max_coords = np.max(shadow_points_2d, axis=0)
+    def _render_shadow_to_image(self, shadow_points_2d, indices, image_size=512):
+        """Сверхбыстрый рендеринг через выпуклую оболочку"""
+        if len(shadow_points_2d) < 3:
+            return np.zeros((image_size, image_size, 4), dtype=np.uint8)
 
-        margin = 0.15
-        size = max_coords - min_coords
-        min_coords -= size * margin
-        max_coords += size * margin
-        size = max_coords - min_coords
+        try:
+            points_int = shadow_points_2d.reshape(-1, 2).astype(np.float32)
+            hull = cv2.convexHull(points_int)
 
-        scale = (image_size - 1) / np.max(size)
+            if hull is None or len(hull) < 3:
+                return np.zeros((image_size, image_size, 4), dtype=np.uint8)
 
-        shadow_img = np.zeros((image_size, image_size, 4), dtype=np.uint8)
-        shadow_img[:, :, 3] = 0
+            hull_points = hull.reshape(-1, 2)
+            min_coords = np.min(hull_points, axis=0)
+            max_coords = np.max(hull_points, axis=0)
 
-        scaled_points = (shadow_points_2d - min_coords) * scale
-        scaled_points = scaled_points.astype(np.float32)
+            margin = 0.1
+            size = max_coords - min_coords
 
-        for triangle_idx in indices:
-            pts = scaled_points[triangle_idx].copy()
-            pts[:, 1] = image_size - 1 - pts[:, 1]
+            if np.max(size) < 1e-6:
+                return np.zeros((image_size, image_size, 4), dtype=np.uint8)
 
-            triangle_mask = np.zeros((image_size, image_size), dtype=np.uint8)
-            cv2.fillConvexPoly(triangle_mask, pts.astype(np.int32), 255)
+            min_coords -= size * margin
+            max_coords += size * margin
+            size = max_coords - min_coords
 
-            triangle_mask = cv2.GaussianBlur(triangle_mask, (5, 5), 1.5)
+            scale = (image_size - 1) / np.max(size)
 
-            shadow_img[:, :, 3] = np.maximum(shadow_img[:, :, 3], triangle_mask)
+            scaled_points = (hull_points - min_coords) * scale
+            scaled_points = scaled_points.astype(np.float32)
+            scaled_points[:, 1] = image_size - 1 - scaled_points[:, 1]
+            scaled_points = scaled_points.astype(np.int32)
 
-        shadow_img[:, :, 0] = 40
-        shadow_img[:, :, 1] = 40
-        shadow_img[:, :, 2] = 40
+            shadow_mask = np.zeros((image_size, image_size), dtype=np.uint8)
+            cv2.fillConvexPoly(shadow_mask, scaled_points, 255)
 
-        shadow_img[:, :, 3] = (shadow_img[:, :, 3].astype(float) * 0.7).astype(np.uint8)
+            shadow_mask = cv2.GaussianBlur(shadow_mask, (9, 9), 3.0)
 
-        return shadow_img
+            shadow_img = np.zeros((image_size, image_size, 4), dtype=np.uint8)
+
+            shadow_img[:, :, 0] = 40
+            shadow_img[:, :, 1] = 40
+            shadow_img[:, :, 2] = 40
+            shadow_img[:, :, 3] = (shadow_mask.astype(float) * 0.7).astype(np.uint8)
+
+            return shadow_img
+
+        except Exception as e:
+            self._logger.error(f'Ошибка рендеринга выпуклой оболочки: {e}')
+            return np.zeros((image_size, image_size, 4), dtype=np.uint8)
 
     def _overlay_shadow_on_frame(self, shadow_image):
         """Накладывает сглаженную тень на текущий кадр"""

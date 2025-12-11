@@ -1,11 +1,8 @@
 from logging import getLogger
-from unittest import case
 
 from analysis.facade_analysis import FacadeAnalysis
 from logger_config import setup_logging
 import cv2
-
-from sandbox.scene3d.run3d import Run3D
 
 
 class RunTime:

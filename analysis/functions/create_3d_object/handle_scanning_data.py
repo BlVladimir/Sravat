@@ -18,6 +18,7 @@ class HandleScanningData(Function):
     @handle_exceptions
     def __call__(self, *args, **kwargs):
         contours = list(map(self._transform_to_local_coordinates, self._state.scanning_data))
+        self._logger.info(f'len(contours)={len(contours)}')
 
         parallelepiped = self._calculate_parallelepiped(contours)
         points = scanning_optimized.process_contours_optimized(parallelepiped, contours)

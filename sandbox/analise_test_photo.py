@@ -13,9 +13,9 @@ from sandbox.scene3d.run3d import Run3D
 """
 Для быстрой тестировки без вебки
 """
-rect_folder = 'C:/Users/vladi/PycharmProjects/Sravat/sandbox/test_photo/test_rect_photo'
-chass_folder = 'C:/Users/vladi/PycharmProjects/Sravat/sandbox/test_photo/chess_photo'
-shadow_folder = 'C:/Users/vladi/PycharmProjects/Sravat/sandbox/test_photo/test_shadow_photo'
+rect_folder = '/Users/vblinov/PycharmProjects/Sravat/sandbox/test_photo/test_rect_photo'
+chass_folder = '/Users/vblinov/PycharmProjects/Sravat/sandbox/test_photo/chess_photo'
+shadow_folder = '/Users/vblinov/PycharmProjects/Sravat/sandbox/test_photo/test_shadow_photo'
 rect_files = [f for f in os.listdir(rect_folder) if f.lower().endswith('.jpg')]
 chess_files = [f for f in os.listdir(chass_folder) if f.lower().endswith('.jpg')]
 shadow_files = [f for f in os.listdir(shadow_folder) if f.lower().endswith('.jpg')]
