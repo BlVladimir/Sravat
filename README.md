@@ -10,6 +10,8 @@ python -m venv venv
 
 venv\Scripts\activate
 
+cd ваш_путь\Sravat\rust_part
+
 pip install maturin
 
 maturin develop --release
