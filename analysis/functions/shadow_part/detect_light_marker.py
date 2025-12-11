@@ -23,13 +23,11 @@ class DetectLightMarker(Function):
 
     @handle_exceptions
     def __call__(self, *args, **kwargs):
-        self._logger.info('Try to detect light marker...')
         frame = self._state.current_frame
         corners, ids, rejected = self.detector_light_markers.detectMarkers(frame)
 
         if ids is None or len(ids) != 1:
             self._state.method = Method.ERROR
-            self._logger.error('Marker detection failed')
             return
 
         output_frame = frame.copy()
