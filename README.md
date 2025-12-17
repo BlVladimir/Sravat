@@ -23,6 +23,9 @@ cd ваш_путь/Sravat
 python3 -m analysis.run
 ```
 
+## Видео работы(Создание объекта):
+https://drive.google.com/file/d/1fA6YBqOqbss-HpT_BwRDvhNlB7Z1Su_m/view?usp=sharing
+
 ## Что реализовано:
 - **Задача 1**
   - Четыре маркера для указания всех сторон
